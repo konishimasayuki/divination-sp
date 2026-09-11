@@ -8,6 +8,7 @@ type Provider = {
   tag: string;
   rating: number;
   status: "available" | "busy" | "off";
+  chatRate: number; // 1通あたりのポイント
 };
 
 type Course = {
@@ -39,20 +40,25 @@ type Product = {
   desc: string;
 };
 
+type ChatMsg = {
+  from: "user" | "provider";
+  text: string;
+};
+
 type CartLine = {
   productId: string;
   qty: number;
 };
 
 type Tab = "home" | "shop" | "mypage";
-type MainStep = "providers" | "booking" | "checkout" | "call";
+type MainStep = "providers" | "booking" | "checkout" | "call" | "chat";
 type MypageView = "top" | "edit" | "purchase" | "history";
 type ShopView = "list" | "cart";
 
 const providers: Provider[] = [
-  { id: "p1", name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, status: "available" },
-  { id: "p2", name: "蓮先生", tag: "四柱推命", rating: 4.8, status: "busy" },
-  { id: "p3", name: "美月先生", tag: "霊感・霊視", rating: 4.7, status: "off" },
+  { id: "p1", name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, status: "available", chatRate: 50 },
+  { id: "p2", name: "蓮先生", tag: "四柱推命", rating: 4.8, status: "busy", chatRate: 60 },
+  { id: "p3", name: "美月先生", tag: "霊感・霊視", rating: 4.7, status: "off", chatRate: 80 },
 ];
 
 const courses: Course[] = [
@@ -155,6 +161,11 @@ export default function Home() {
     { id: "h1", label: "初回登録特典", detail: "新規登録ボーナス", points: 800, date: "9/1" },
   ]);
 
+  // チャット占い
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+
   // 通話画面
   const [preCall, setPreCall] = useState(true);
   const [chat, setChat] = useState<string[]>(["お客様: このカードの意味は?"]);
@@ -168,6 +179,48 @@ export default function Home() {
     }
     setFormError("");
     setRegistered(true);
+  }
+
+  function startChat(p: Provider) {
+    if (p.status === "off") return;
+    setProvider(p);
+    setChatMsgs([
+      { from: "provider", text: `こんにちは、${p.name}です。何でも聞いてくださいね。` },
+    ]);
+    setStep("chat");
+  }
+
+  function sendChatMessage() {
+    if (!chatInput.trim() || !provider) return;
+    if (points < provider.chatRate) {
+      setChatMsgs((prev) => [
+        ...prev,
+        { from: "provider", text: "ポイントが不足しています。マイページから購入してください。" },
+      ]);
+      return;
+    }
+    const text = chatInput.trim();
+    setChatInput("");
+    setChatMsgs((prev) => [...prev, { from: "user", text }]);
+    setPoints((prev) => prev - provider.chatRate);
+    setHistory((prev) => [
+      {
+        id: `h${prev.length + 1}`,
+        label: `${provider.name} チャット占い`,
+        detail: text.slice(0, 20),
+        points: -provider.chatRate,
+        date: "本日",
+      },
+      ...prev,
+    ]);
+    setChatSending(true);
+    setTimeout(() => {
+      setChatMsgs((prev) => [
+        ...prev,
+        { from: "provider", text: "なるほど、そのことについて詳しく見てみますね。" },
+      ]);
+      setChatSending(false);
+    }, 1200);
   }
 
   function selectProvider(p: Provider) {
@@ -377,11 +430,9 @@ export default function Home() {
             {step === "providers" && (
               <div className="flex flex-col gap-2">
                 {providers.map((p) => (
-                  <button
+                  <div
                     key={p.id}
-                    onClick={() => selectProvider(p)}
-                    disabled={p.status !== "available"}
-                    className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 text-left disabled:opacity-60"
+                    className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700">
                       {p.name[0]}
@@ -391,11 +442,32 @@ export default function Home() {
                       <p className="text-xs text-neutral-500">
                         {p.tag} ★{p.rating}
                       </p>
+                      <p className="text-xs text-neutral-400">
+                        チャット {p.chatRate}pt/通
+                      </p>
                     </div>
-                    <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
-                      {statusLabel[p.status]}
-                    </span>
-                  </button>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
+                        {statusLabel[p.status]}
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => selectProvider(p)}
+                          disabled={p.status !== "available"}
+                          className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                        >
+                          通話
+                        </button>
+                        <button
+                          onClick={() => startChat(p)}
+                          disabled={p.status === "off"}
+                          className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                        >
+                          チャット
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -578,6 +650,60 @@ export default function Home() {
                 >
                   通話を終了する
                 </button>
+              </div>
+            )}
+
+            {step === "chat" && provider && (
+              <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3">
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      setStep("providers");
+                      setProvider(null);
+                    }}
+                    className="text-xs text-neutral-500"
+                  >
+                    ← 戻る
+                  </button>
+                  <p className="text-xs text-neutral-500">
+                    1通 {provider.chatRate}pt ・ 保有 {points}pt
+                  </p>
+                </div>
+                <p className="text-sm font-medium">{provider.name} とチャット占い</p>
+                <div className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-lg bg-neutral-50 p-3">
+                  {chatMsgs.map((m, i) => (
+                    <div
+                      key={i}
+                      className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
+                        m.from === "user"
+                          ? "ml-auto bg-blue-600 text-white"
+                          : "bg-white border border-neutral-200"
+                      }`}
+                    >
+                      {m.text}
+                    </div>
+                  ))}
+                  {chatSending && (
+                    <div className="max-w-[80%] rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-400">
+                      入力中...
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
+                    placeholder={`メッセージを送る(${provider.chatRate}pt)`}
+                    className="flex-1 rounded border border-neutral-200 px-2 py-2 text-xs"
+                  />
+                  <button
+                    onClick={sendChatMessage}
+                    className="rounded bg-neutral-900 px-3 py-2 text-xs text-white"
+                  >
+                    送信
+                  </button>
+                </div>
               </div>
             )}
           </>
