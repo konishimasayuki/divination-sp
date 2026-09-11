@@ -31,9 +31,23 @@ type HistoryItem = {
   date: string;
 };
 
-type Tab = "home" | "mypage";
+type Product = {
+  id: string;
+  name: string;
+  category: string;
+  points: number;
+  desc: string;
+};
+
+type CartLine = {
+  productId: string;
+  qty: number;
+};
+
+type Tab = "home" | "shop" | "mypage";
 type MainStep = "providers" | "booking" | "checkout" | "call";
 type MypageView = "top" | "edit" | "purchase" | "history";
+type ShopView = "list" | "cart";
 
 const providers: Provider[] = [
   { id: "p1", name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, status: "available" },
@@ -53,6 +67,53 @@ const pointPacks: PointPack[] = [
   { id: "pp2", points: 3000, price: 2800 },
   { id: "pp3", points: 5000, price: 4500 },
 ];
+
+const products: Product[] = [
+  {
+    id: "pr1",
+    name: "アメジスト浄化ブレスレット",
+    category: "水晶",
+    points: 3200,
+    desc: "浄化・魔除けの意味を持つ紫水晶のブレスレット",
+  },
+  {
+    id: "pr2",
+    name: "ローズクォーツブレスレット",
+    category: "水晶",
+    points: 2800,
+    desc: "恋愛運アップの定番、淡いピンクの天然石",
+  },
+  {
+    id: "pr3",
+    name: "水晶(クリアクォーツ)さざれ石",
+    category: "水晶",
+    points: 1500,
+    desc: "浄化用のさざれ石。他の石の浄化にも使える",
+  },
+  {
+    id: "pr4",
+    name: "本連 数珠(女性用)",
+    category: "数珠",
+    points: 4500,
+    desc: "法事・お参り用の正式な本連数珠",
+  },
+  {
+    id: "pr5",
+    name: "略式数珠(男女兼用)",
+    category: "数珠",
+    points: 2200,
+    desc: "普段使いしやすいシンプルな略式数珠",
+  },
+  {
+    id: "pr6",
+    name: "先生監修タロットカード",
+    category: "タロット",
+    points: 3800,
+    desc: "紗希先生が実際に使用している78枚デッキと同モデル",
+  },
+];
+
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
 const statusLabel: Record<Provider["status"], string> = {
   available: "対応可能",
@@ -79,6 +140,9 @@ export default function Home() {
   const [tab, setTab] = useState<Tab>("home");
   const [mypageView, setMypageView] = useState<MypageView>("top");
   const [step, setStep] = useState<MainStep>("providers");
+  const [shopView, setShopView] = useState<ShopView>("list");
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [shopMessage, setShopMessage] = useState("");
 
   // 予約フロー
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -160,6 +224,57 @@ export default function Home() {
       },
       ...prev,
     ]);
+  }
+
+  function cartTotal() {
+    return cart.reduce((sum, line) => sum + productMap[line.productId].points * line.qty, 0);
+  }
+
+  function addToCart(productId: string) {
+    setShopMessage("");
+    setCart((prev) => {
+      const existing = prev.find((l) => l.productId === productId);
+      if (existing) {
+        return prev.map((l) =>
+          l.productId === productId ? { ...l, qty: l.qty + 1 } : l
+        );
+      }
+      return [...prev, { productId, qty: 1 }];
+    });
+  }
+
+  function changeQty(productId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((l) => (l.productId === productId ? { ...l, qty: l.qty + delta } : l))
+        .filter((l) => l.qty > 0)
+    );
+  }
+
+  function checkoutCart() {
+    const total = cartTotal();
+    if (cart.length === 0) return;
+    if (total > points) {
+      setShopMessage("ポイントが不足しています。マイページから購入してください。");
+      return;
+    }
+    setPoints((prev) => prev - total);
+    const label = cart
+      .map((l) => `${productMap[l.productId].name} x${l.qty}`)
+      .join(" / ");
+    setHistory((prev) => [
+      {
+        id: `h${prev.length + 1}`,
+        label: "物販購入",
+        detail: label,
+        points: -total,
+        date: "本日",
+      },
+      ...prev,
+    ]);
+    setCart([]);
+    setShopMessage("購入が完了しました");
+    setShopView("list");
   }
 
   function buyPack(pack: PointPack) {
@@ -468,6 +583,118 @@ export default function Home() {
           </>
         )}
 
+        {tab === "shop" && (
+          <>
+            {shopView === "list" && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">占いグッズ</p>
+                  <button
+                    onClick={() => setShopView("cart")}
+                    className="rounded border border-neutral-200 px-3 py-1 text-xs"
+                  >
+                    カート({cart.reduce((s, l) => s + l.qty, 0)})
+                  </button>
+                </div>
+                {["水晶", "数珠", "タロット"].map((category) => (
+                  <div key={category} className="flex flex-col gap-2">
+                    <p className="text-xs font-medium text-neutral-500">{category}</p>
+                    {products
+                      .filter((p) => p.category === category)
+                      .map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-3"
+                        >
+                          <div className="pr-2">
+                            <p className="text-sm font-medium">{p.name}</p>
+                            <p className="text-xs text-neutral-500">{p.desc}</p>
+                            <p className="mt-1 text-xs font-medium text-neutral-700">
+                              {p.points.toLocaleString()}pt
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => addToCart(p.id)}
+                            className="shrink-0 rounded bg-neutral-900 px-3 py-1.5 text-xs text-white"
+                          >
+                            追加
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {shopView === "cart" && (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => setShopView("list")}
+                  className="self-start text-xs text-neutral-500"
+                >
+                  ← 商品一覧に戻る
+                </button>
+                <p className="text-sm font-medium">カート</p>
+                {cart.length === 0 && (
+                  <p className="text-xs text-neutral-500">カートは空です</p>
+                )}
+                {cart.map((line) => {
+                  const p = productMap[line.productId];
+                  return (
+                    <div
+                      key={line.productId}
+                      className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
+                    >
+                      <div>
+                        <p className="text-sm">{p.name}</p>
+                        <p className="text-xs text-neutral-500">
+                          {p.points.toLocaleString()}pt × {line.qty}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => changeQty(line.productId, -1)}
+                          className="h-6 w-6 rounded border border-neutral-200 text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs">{line.qty}</span>
+                        <button
+                          onClick={() => changeQty(line.productId, 1)}
+                          className="h-6 w-6 rounded border border-neutral-200 text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {cart.length > 0 && (
+                  <>
+                    <div className="flex justify-between rounded-lg bg-neutral-50 px-3 py-2 text-sm">
+                      <span className="text-neutral-500">合計</span>
+                      <span className="font-medium">{cartTotal().toLocaleString()}pt</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-neutral-500">
+                      <span>保有ポイント</span>
+                      <span>{points.toLocaleString()}pt</span>
+                    </div>
+                    <button
+                      onClick={checkoutCart}
+                      className="rounded-lg bg-blue-600 py-2 text-sm text-white"
+                    >
+                      ポイントで購入する
+                    </button>
+                  </>
+                )}
+                {shopMessage && (
+                  <p className="text-xs text-amber-600">{shopMessage}</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
         {tab === "mypage" && (
           <>
             {mypageView === "top" && (
@@ -641,6 +868,17 @@ export default function Home() {
             }`}
           >
             ホーム
+          </button>
+          <button
+            onClick={() => {
+              setTab("shop");
+              setShopView("list");
+            }}
+            className={`flex-1 py-3 text-xs ${
+              tab === "shop" ? "font-medium text-neutral-900" : "text-neutral-400"
+            }`}
+          >
+            物販
           </button>
           <button
             onClick={() => {
