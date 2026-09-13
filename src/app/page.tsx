@@ -136,6 +136,12 @@ const statusStyle: Record<Provider["status"], string> = {
 export default function Home() {
   // 登録状態
   const [registered, setRegistered] = useState(false);
+  const [authStep, setAuthStep] = useState<"login" | "register" | "app" | "admin" | "provider">(
+    "login"
+  );
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [gender, setGender] = useState("");
@@ -172,6 +178,28 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [cameraOn, setCameraOn] = useState(true);
 
+  function handleLogin() {
+    setLoginError("");
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError("メールアドレスとパスワードを入力してください");
+      return;
+    }
+    if (loginEmail === "z" && loginPassword === "z") {
+      setAuthStep("admin");
+      return;
+    }
+    if (loginEmail === "provider" && loginPassword === "provider") {
+      setAuthStep("provider");
+      return;
+    }
+    // デモ用: それ以外はお客様ログイン。登録済みならアプリへ、未登録なら会員登録へ
+    if (registered) {
+      setAuthStep("app");
+    } else {
+      setAuthStep("register");
+    }
+  }
+
   function submitRegistration() {
     if (!name.trim() || !birthday || !gender || !email.trim()) {
       setFormError("すべての項目を入力してください");
@@ -179,6 +207,7 @@ export default function Home() {
     }
     setFormError("");
     setRegistered(true);
+    setAuthStep("app");
   }
 
   function startChat(p: Provider) {
@@ -345,11 +374,114 @@ export default function Home() {
     setMypageView("top");
   }
 
-  // ---------- 登録前 ----------
-  if (!registered) {
+  // ---------- ログイン画面 ----------
+  if (authStep === "login") {
     return (
       <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
         <div className="w-full max-w-sm">
+          <h1 className="mb-1 text-lg font-medium">ログイン</h1>
+          <p className="mb-4 text-xs text-neutral-500">
+            オンライン占い(デモ)へようこそ
+          </p>
+          <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">メールアドレス</span>
+              <input
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="rounded border border-neutral-200 px-2 py-2 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">パスワード</span>
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••"
+                className="rounded border border-neutral-200 px-2 py-2 text-sm"
+              />
+            </label>
+            {loginError && <p className="text-xs text-red-600">{loginError}</p>}
+            <button
+              onClick={handleLogin}
+              className="mt-1 rounded-lg bg-neutral-900 py-2 text-sm text-white"
+            >
+              ログイン
+            </button>
+          </div>
+          <button
+            onClick={() => setAuthStep("register")}
+            className="mt-4 w-full text-center text-xs text-blue-600 underline"
+          >
+            はじめての方はこちら(会員登録)
+          </button>
+          <p className="mt-6 text-center text-[10px] text-neutral-400">
+            デモ用ログイン: 管理者 z / z ・ 占い師 provider / provider
+            <br />
+            それ以外はお客様として扱われます(未登録なら会員登録へ)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- 管理者モード(デモ) ----------
+  if (authStep === "admin") {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+        <div className="w-full max-w-sm">
+          <button
+            onClick={() => setAuthStep("login")}
+            className="mb-4 text-xs text-neutral-500"
+          >
+            ← ログアウト
+          </button>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <p className="text-sm font-medium">スーパー管理者モード</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              占い師管理・売上集計・ユーザー管理などをここに追加予定(準備中)
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- 占い師モード(デモ) ----------
+  if (authStep === "provider") {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+        <div className="w-full max-w-sm">
+          <button
+            onClick={() => setAuthStep("login")}
+            className="mb-4 text-xs text-neutral-500"
+          >
+            ← ログアウト
+          </button>
+          <div className="rounded-xl border border-neutral-200 bg-white p-4">
+            <p className="text-sm font-medium">占い師モード</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              ステータス切り替え(対応可能/鑑定中/休止中)・チャット対応・報酬確認などをここに追加予定(準備中)
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- 登録前 ----------
+  if (authStep === "register") {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+        <div className="w-full max-w-sm">
+          <button
+            onClick={() => setAuthStep("login")}
+            className="mb-2 text-xs text-neutral-500"
+          >
+            ← ログインに戻る
+          </button>
           <h1 className="mb-1 text-lg font-medium">はじめまして</h1>
           <p className="mb-4 text-xs text-neutral-500">
             占いに必要な情報を入力してください
