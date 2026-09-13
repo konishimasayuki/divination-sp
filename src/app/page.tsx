@@ -55,7 +55,7 @@ type MainStep = "providers" | "booking" | "checkout" | "call" | "chat";
 type MypageView = "top" | "edit" | "purchase" | "history";
 type ShopView = "list" | "cart";
 
-const providers: Provider[] = [
+const initialProviders: Provider[] = [
   { id: "p1", name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, status: "available", chatRate: 50 },
   { id: "p2", name: "蓮先生", tag: "四柱推命", rating: 4.8, status: "busy", chatRate: 60 },
   { id: "p3", name: "美月先生", tag: "霊感・霊視", rating: 4.7, status: "off", chatRate: 80 },
@@ -134,6 +134,18 @@ const statusStyle: Record<Provider["status"], string> = {
 };
 
 export default function Home() {
+  // 占い師データ(管理者・占い師モードから編集可能)
+  // 占い師データ(管理者・占い師モードから編集可能)
+  const [providerList, setProviderList] = useState<Provider[]>(initialProviders);
+  const [adminView, setAdminView] = useState<"overview" | "providers" | "history">(
+    "overview"
+  );
+  const loggedInProviderId = "p1"; // デモ: 占い師ログイン時は紗希先生として扱う
+
+  function updateProviderStatus(id: string, status: Provider["status"]) {
+    setProviderList((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+  }
+
   // 登録状態
   const [registered, setRegistered] = useState(false);
   const [authStep, setAuthStep] = useState<"login" | "register" | "app" | "admin" | "provider">(
@@ -423,21 +435,151 @@ export default function Home() {
 
   // ---------- 管理者モード(デモ) ----------
   if (authStep === "admin") {
+    const totalSales = history
+      .filter((h) => h.points < 0)
+      .reduce((sum, h) => sum + Math.abs(h.points), 0);
+    const totalCharged = history
+      .filter((h) => h.points > 0)
+      .reduce((sum, h) => sum + h.points, 0);
+
     return (
-      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+      <div className="min-h-screen bg-neutral-50 flex justify-center pb-20 pt-8 px-4">
         <div className="w-full max-w-sm">
-          <button
-            onClick={() => setAuthStep("login")}
-            className="mb-4 text-xs text-neutral-500"
-          >
-            ← ログアウト
-          </button>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <p className="text-sm font-medium">スーパー管理者モード</p>
-            <p className="mt-2 text-xs text-neutral-500">
-              占い師管理・売上集計・ユーザー管理などをここに追加予定(準備中)
-            </p>
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-lg font-medium">管理者モード</h1>
+            <button onClick={() => setAuthStep("login")} className="text-xs text-neutral-500">
+              ログアウト
+            </button>
           </div>
+
+          {adminView === "overview" && (
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                  <p className="text-xs text-neutral-500">ポイント消費額(累計)</p>
+                  <p className="mt-1 text-lg font-medium">{totalSales.toLocaleString()}pt</p>
+                </div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                  <p className="text-xs text-neutral-500">ポイント購入額(累計)</p>
+                  <p className="mt-1 text-lg font-medium">{totalCharged.toLocaleString()}pt</p>
+                </div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                  <p className="text-xs text-neutral-500">登録占い師数</p>
+                  <p className="mt-1 text-lg font-medium">{providerList.length}名</p>
+                </div>
+                <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                  <p className="text-xs text-neutral-500">対応可能な占い師</p>
+                  <p className="mt-1 text-lg font-medium">
+                    {providerList.filter((p) => p.status === "available").length}名
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-neutral-200 bg-white p-3">
+                <p className="mb-2 text-xs font-medium text-neutral-600">占い師の稼働状況</p>
+                <div className="flex flex-col gap-2">
+                  {providerList.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between text-xs">
+                      <span>{p.name}</span>
+                      <span className={`rounded px-2 py-0.5 ${statusStyle[p.status]}`}>
+                        {statusLabel[p.status]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setAdminView("providers")}
+                className="rounded-lg border border-neutral-200 bg-white py-2 text-sm"
+              >
+                占い師を管理する
+              </button>
+              <button
+                onClick={() => setAdminView("history")}
+                className="rounded-lg border border-neutral-200 bg-white py-2 text-sm"
+              >
+                全取引履歴を見る
+              </button>
+            </div>
+          )}
+
+          {adminView === "providers" && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setAdminView("overview")}
+                className="self-start text-xs text-neutral-500"
+              >
+                ← 概要に戻る
+              </button>
+              <p className="text-sm font-medium">占い師管理</p>
+              {providerList.map((p) => (
+                <div key={p.id} className="rounded-xl border border-neutral-200 bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{p.name}</p>
+                      <p className="text-xs text-neutral-500">
+                        {p.tag} ★{p.rating} ・チャット{p.chatRate}pt/通
+                      </p>
+                    </div>
+                    <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
+                      {statusLabel[p.status]}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    {(["available", "busy", "off"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updateProviderStatus(p.id, s)}
+                        className={`flex-1 rounded border py-1 text-xs ${
+                          p.status === s
+                            ? "border-neutral-900 bg-neutral-900 text-white"
+                            : "border-neutral-200"
+                        }`}
+                      >
+                        {statusLabel[s]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {adminView === "history" && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setAdminView("overview")}
+                className="self-start text-xs text-neutral-500"
+              >
+                ← 概要に戻る
+              </button>
+              <p className="text-sm font-medium">全取引履歴(デモお客様分)</p>
+              <div className="flex flex-col gap-2">
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
+                  >
+                    <div>
+                      <p className="text-sm">{h.label}</p>
+                      <p className="text-xs text-neutral-500">
+                        {h.detail} ・ {h.date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${
+                        h.points >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {h.points >= 0 ? "+" : ""}
+                      {h.points}pt
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -445,20 +587,80 @@ export default function Home() {
 
   // ---------- 占い師モード(デモ) ----------
   if (authStep === "provider") {
+    const me = providerList.find((p) => p.id === loggedInProviderId)!;
+    const myEarnings = history
+      .filter((h) => h.label.includes(me.name) && h.points < 0)
+      .reduce((sum, h) => sum + Math.abs(h.points), 0);
+    const myLogs = history.filter((h) => h.label.includes(me.name));
+
     return (
-      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+      <div className="min-h-screen bg-neutral-50 flex justify-center pb-20 pt-8 px-4">
         <div className="w-full max-w-sm">
-          <button
-            onClick={() => setAuthStep("login")}
-            className="mb-4 text-xs text-neutral-500"
-          >
-            ← ログアウト
-          </button>
-          <div className="rounded-xl border border-neutral-200 bg-white p-4">
-            <p className="text-sm font-medium">占い師モード</p>
-            <p className="mt-2 text-xs text-neutral-500">
-              ステータス切り替え(対応可能/鑑定中/休止中)・チャット対応・報酬確認などをここに追加予定(準備中)
-            </p>
+          <div className="mb-4 flex items-center justify-between">
+            <h1 className="text-lg font-medium">占い師モード</h1>
+            <button onClick={() => setAuthStep("login")} className="text-xs text-neutral-500">
+              ログアウト
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-base font-medium text-blue-700">
+                  {me.name[0]}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{me.name}</p>
+                  <p className="text-xs text-neutral-500">
+                    {me.tag} ★{me.rating} ・チャット{me.chatRate}pt/通
+                  </p>
+                </div>
+              </div>
+              <p className="mb-1 mt-3 text-xs text-neutral-500">ステータス</p>
+              <div className="flex gap-2">
+                {(["available", "busy", "off"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => updateProviderStatus(me.id, s)}
+                    className={`flex-1 rounded border py-1.5 text-xs ${
+                      me.status === s
+                        ? "border-neutral-900 bg-neutral-900 text-white"
+                        : "border-neutral-200"
+                    }`}
+                  >
+                    {statusLabel[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <p className="text-xs text-neutral-500">今月の受取見込み(デモ)</p>
+              <p className="mt-1 text-lg font-medium">{myEarnings.toLocaleString()}pt</p>
+              <p className="mt-1 text-[10px] text-neutral-400">
+                ※ 実際にはここから運営手数料を差し引いた額がStripe Connect経由で出金されます
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-3">
+              <p className="mb-2 text-xs font-medium text-neutral-600">対応履歴</p>
+              {myLogs.length === 0 && (
+                <p className="text-xs text-neutral-400">まだ対応履歴がありません</p>
+              )}
+              <div className="flex flex-col gap-2">
+                {myLogs.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between text-xs">
+                    <div>
+                      <p>{h.label}</p>
+                      <p className="text-neutral-400">
+                        {h.detail} ・ {h.date}
+                      </p>
+                    </div>
+                    <span className="text-emerald-600">+{Math.abs(h.points)}pt</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -555,7 +757,7 @@ export default function Home() {
           <>
             {step === "providers" && (
               <div className="flex flex-col gap-2">
-                {providers.map((p) => (
+                {providerList.map((p) => (
                   <div
                     key={p.id}
                     className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
