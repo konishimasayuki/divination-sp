@@ -188,16 +188,15 @@ export default function Home() {
       setAuthStep("admin");
       return;
     }
-    if (loginEmail === "provider" && loginPassword === "provider") {
+    if (loginEmail === "b" && loginPassword === "b") {
       setAuthStep("provider");
       return;
     }
-    // デモ用: それ以外はお客様ログイン。登録済みならアプリへ、未登録なら会員登録へ
-    if (registered) {
-      setAuthStep("app");
-    } else {
-      setAuthStep("register");
+    if (loginEmail === "a" && loginPassword === "a") {
+      setAuthStep(registered ? "app" : "register");
+      return;
     }
+    setLoginError("ログイン情報が正しくありません");
   }
 
   function submitRegistration() {
@@ -417,11 +416,6 @@ export default function Home() {
           >
             はじめての方はこちら(会員登録)
           </button>
-          <p className="mt-6 text-center text-[10px] text-neutral-400">
-            デモ用ログイン: 管理者 z / z ・ 占い師 provider / provider
-            <br />
-            それ以外はお客様として扱われます(未登録なら会員登録へ)
-          </p>
         </div>
       </div>
     );
