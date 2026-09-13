@@ -137,9 +137,12 @@ export default function Home() {
   // 占い師データ(管理者・占い師モードから編集可能)
   // 占い師データ(管理者・占い師モードから編集可能)
   const [providerList, setProviderList] = useState<Provider[]>(initialProviders);
-  const [adminView, setAdminView] = useState<"overview" | "providers" | "history">(
-    "overview"
-  );
+  const [adminView, setAdminView] = useState<
+    "overview" | "providers" | "history" | "settings"
+  >("overview");
+  const [stripePubKey, setStripePubKey] = useState("");
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+  const [stripeSaved, setStripeSaved] = useState(false);
   const loggedInProviderId = "p1"; // デモ: 占い師ログイン時は紗希先生として扱う
 
   function updateProviderStatus(id: string, status: Provider["status"]) {
@@ -501,6 +504,12 @@ export default function Home() {
               >
                 全取引履歴を見る
               </button>
+              <button
+                onClick={() => setAdminView("settings")}
+                className="rounded-lg border border-neutral-200 bg-white py-2 text-sm"
+              >
+                決済設定(Stripe)
+              </button>
             </div>
           )}
 
@@ -577,6 +586,80 @@ export default function Home() {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {adminView === "settings" && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setAdminView("overview")}
+                className="self-start text-xs text-neutral-500"
+              >
+                ← 概要に戻る
+              </button>
+              <p className="text-sm font-medium">決済設定(Stripe)</p>
+
+              <div className="rounded-xl border border-neutral-200 bg-white p-4">
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">
+                    公開可能キー(pk_で始まるもの)
+                  </span>
+                  <input
+                    value={stripePubKey}
+                    onChange={(e) => {
+                      setStripePubKey(e.target.value);
+                      setStripeSaved(false);
+                    }}
+                    placeholder="pk_live_xxxxxxxx"
+                    className="rounded border border-neutral-200 px-2 py-2 text-xs"
+                  />
+                </label>
+                <label className="mt-3 flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">
+                    シークレットキー(sk_で始まるもの)
+                  </span>
+                  <input
+                    type="password"
+                    value={stripeSecretKey}
+                    onChange={(e) => {
+                      setStripeSecretKey(e.target.value);
+                      setStripeSaved(false);
+                    }}
+                    placeholder="sk_live_xxxxxxxx"
+                    className="rounded border border-neutral-200 px-2 py-2 text-xs"
+                  />
+                </label>
+                <button
+                  onClick={() => setStripeSaved(true)}
+                  className="mt-3 w-full rounded-lg bg-neutral-900 py-2 text-sm text-white"
+                >
+                  この画面に一時保存(デモ)
+                </button>
+                {stripeSaved && (
+                  <p className="mt-2 text-xs text-emerald-600">
+                    入力を確認しました。実際の反映にはVercel側の設定が必要です(下記参照)。
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
+                <p className="font-medium">実際に反映させるには</p>
+                <ol className="mt-1 list-decimal pl-4">
+                  <li>公開可能キー(pk_)は、そのままこの画面の値を本番コードで使ってOKです</li>
+                  <li>
+                    シークレットキー(sk_)は、Vercelプロジェクトの
+                    「Settings → Environment Variables」に
+                    <code className="mx-1 rounded bg-white px-1">STRIPE_SECRET_KEY</code>
+                    として登録してください
+                  </li>
+                  <li>
+                    登録後、サーバー側(API Route)からのみそのキーを読み込む形で決済処理を実装します
+                  </li>
+                </ol>
+                <p className="mt-2">
+                  この画面自体には保存機能はなく(ブラウザを閉じると消えます)、あくまで入力内容の確認・共有用です。
+                </p>
               </div>
             </div>
           )}
