@@ -176,6 +176,96 @@ const products: Product[] = [
     thumb: "from-indigo-300 to-amber-100",
     image: "/product-tarot.jpg",
   },
+  {
+    id: "pr7",
+    name: "オラクルカード(デモ)",
+    category: "タロット",
+    points: 3500,
+    desc: "直感を高めるメッセージ性の強いオラクルカードデッキ",
+    thumb: "from-indigo-200 to-amber-100",
+    image: "/product-tarot.jpg",
+  },
+  {
+    id: "pr8",
+    name: "サンストーンブレスレット(デモ)",
+    category: "水晶",
+    points: 3400,
+    desc: "太陽の石と呼ばれる、活力・仕事運アップのお守り石",
+    thumb: "from-amber-300 to-orange-100",
+    image: "/product-amethyst.jpg",
+  },
+  {
+    id: "pr9",
+    name: "タイガーアイブレスレット(デモ)",
+    category: "水晶",
+    points: 2600,
+    desc: "金運・仕事運に効果があるとされる縞模様の天然石",
+    thumb: "from-yellow-300 to-neutral-100",
+    image: "/product-rosequartz.jpg",
+  },
+  {
+    id: "pr10",
+    name: "本連数珠(男性用)(デモ)",
+    category: "数珠",
+    points: 4800,
+    desc: "法事・お参り用の正式な本連数珠、男性向けの落ち着いたデザイン",
+    thumb: "from-neutral-500 to-neutral-300",
+    image: "/product-juzu.jpg",
+  },
+  {
+    id: "pr11",
+    name: "略式数珠(お子様用)(デモ)",
+    category: "数珠",
+    points: 1800,
+    desc: "お子様の手にも合わせやすい、小ぶりな略式数珠",
+    thumb: "from-sky-100 to-neutral-100",
+    image: "/product-juzu.jpg",
+  },
+  {
+    id: "pr12",
+    name: "縁結びお守り(デモ)",
+    category: "お守り",
+    points: 1200,
+    desc: "良縁・恋愛成就を願う、紗希先生監修の特製お守り",
+    thumb: "from-pink-300 to-red-100",
+    image: "/product-omamori.jpg",
+  },
+  {
+    id: "pr13",
+    name: "金運上昇お守り(デモ)",
+    category: "お守り",
+    points: 1200,
+    desc: "金運・仕事運アップを願う、蓮先生監修の特製お守り",
+    thumb: "from-amber-300 to-yellow-100",
+    image: "/product-omamori.jpg",
+  },
+  {
+    id: "pr14",
+    name: "開運だるま(小)(デモ)",
+    category: "開運グッズ",
+    points: 2500,
+    desc: "願掛け・目標達成のお守りとして人気の縁起物",
+    thumb: "from-red-400 to-red-100",
+    image: "/product-daruma.jpg",
+  },
+  {
+    id: "pr15",
+    name: "招福開運セット(デモ)",
+    category: "開運グッズ",
+    points: 3000,
+    desc: "だるま・お守り・浄化アイテムをまとめた開運セット",
+    thumb: "from-red-300 to-amber-100",
+    image: "/product-daruma.jpg",
+  },
+  {
+    id: "pr16",
+    name: "先生直筆 色紙(デモ)",
+    category: "色紙",
+    points: 8000,
+    desc: "紗希先生が直接メッセージを書き入れる、世界に一つの色紙",
+    thumb: "from-neutral-200 to-amber-100",
+    image: "/product-shikishi.jpg",
+  },
 ];
 
 const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
@@ -930,21 +1020,21 @@ export default function Home() {
   return (
     <div className="h-[100dvh] overflow-hidden bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-8">
       <div className="flex h-full w-full max-w-sm flex-col bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl overflow-hidden">
-        <div className="relative h-20 shrink-0 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+        <div className="relative flex h-20 shrink-0 items-center justify-between overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 px-5">
           <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/10" />
+          <div className="relative flex items-center gap-2">
+            <img src="/home-icon.png" alt="" className="h-11 w-11 object-contain" />
+            <h1 className="text-lg font-bold text-white">杉の泉</h1>
+          </div>
           <button
             onClick={() => {
               setTab("mypage");
               setMypageView("top");
             }}
-            className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-purple-800"
+            className="relative shrink-0 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-purple-800"
           >
             保有 {points}pt
           </button>
-          <div className="relative flex h-full items-center gap-2 px-5 pb-2 pt-9">
-            <img src="/home-icon.png" alt="" className="h-11 w-11 object-contain" />
-            <h1 className="text-lg font-bold text-white">杉の泉</h1>
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 pb-24">
@@ -1447,7 +1537,7 @@ export default function Home() {
                     🛒 カート({cart.reduce((s, l) => s + l.qty, 0)})
                   </button>
                 </div>
-                {["水晶", "数珠", "タロット"].map((category) => (
+                {["水晶", "数珠", "タロット", "お守り", "開運グッズ", "色紙"].map((category) => (
                   <div key={category} className="flex flex-col gap-2">
                     <p className="text-xs font-bold text-purple-700">{category}</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -1864,11 +1954,15 @@ export default function Home() {
           <div className="flex flex-1 justify-center">
             <button
               onClick={() => setTab("home")}
-              className={`absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 p-2 shadow-lg ring-4 ring-white ${
+              className={`absolute -top-6 flex h-16 w-16 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 shadow-lg ring-4 ring-white ${
                 tab === "home" ? "ring-purple-200" : ""
               }`}
             >
-              <img src="/home-icon.png" alt="ホーム" className="h-full w-full object-contain" />
+              <img
+                src="/home-icon.png"
+                alt="ホーム"
+                className="h-[86px] w-[86px] object-contain"
+              />
             </button>
           </div>
 
