@@ -50,9 +50,9 @@ type CartLine = {
   qty: number;
 };
 
-type Tab = "home" | "shop" | "mypage";
+type Tab = "home" | "search" | "shop" | "history" | "messages" | "mypage";
 type MainStep = "providers" | "booking" | "checkout" | "call" | "chat";
-type MypageView = "top" | "edit" | "purchase" | "history";
+type MypageView = "top" | "edit" | "purchase";
 type ShopView = "list" | "cart";
 
 const initialProviders: Provider[] = [
@@ -170,6 +170,7 @@ export default function Home() {
   const [shopView, setShopView] = useState<ShopView>("list");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [shopMessage, setShopMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 予約フロー
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -391,13 +392,17 @@ export default function Home() {
   // ---------- ログイン画面 ----------
   if (authStep === "login") {
     return (
-      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex justify-center py-10 px-4">
         <div className="w-full max-w-sm">
-          <h1 className="mb-1 text-lg font-medium">ログイン</h1>
-          <p className="mb-4 text-xs text-neutral-500">
-            オンライン占い(デモ)へようこそ
-          </p>
-          <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-2xl">
+              🔮
+            </div>
+            <h1 className="text-2xl font-bold tracking-wide text-purple-950">杉の泉</h1>
+            <p className="mt-1 text-xs text-purple-400">運命を、あなたの味方に</p>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
             <label className="flex flex-col gap-1">
               <span className="text-xs text-neutral-600">メールアドレス</span>
               <input
@@ -420,14 +425,14 @@ export default function Home() {
             {loginError && <p className="text-xs text-red-600">{loginError}</p>}
             <button
               onClick={handleLogin}
-              className="mt-1 rounded-lg bg-neutral-900 py-2 text-sm text-white"
+              className="mt-1 rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white"
             >
               ログイン
             </button>
           </div>
           <button
             onClick={() => setAuthStep("register")}
-            className="mt-4 w-full text-center text-xs text-blue-600 underline"
+            className="mt-4 w-full text-center text-xs text-purple-600 underline"
           >
             はじめての方はこちら(会員登録)
           </button>
@@ -689,7 +694,7 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-base font-medium text-blue-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-base font-medium text-purple-700">
                   {me.name[0]}
                 </div>
                 <div>
@@ -824,7 +829,7 @@ export default function Home() {
     <div className="min-h-screen bg-neutral-50 flex justify-center pb-20 pt-8 px-4">
       <div className="w-full max-w-sm">
         <header className="mb-4 flex items-center justify-between">
-          <h1 className="text-lg font-medium">オンライン占い(デモ)</h1>
+          <h1 className="text-lg font-bold text-purple-950">杉の泉</h1>
           <button
             onClick={() => {
               setTab("mypage");
@@ -845,7 +850,7 @@ export default function Home() {
                     key={p.id}
                     className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
                       {p.name[0]}
                     </div>
                     <div className="flex-1">
@@ -902,7 +907,7 @@ export default function Home() {
                         onClick={() => setCourse(c)}
                         className={`rounded-lg border p-2 text-left ${
                           course?.id === c.id
-                            ? "border-blue-500 bg-blue-50"
+                            ? "border-purple-500 bg-purple-50"
                             : "border-neutral-200"
                         }`}
                       >
@@ -921,7 +926,7 @@ export default function Home() {
                         key={t}
                         onClick={() => setTime(t)}
                         className={`rounded-lg border p-2 text-xs ${
-                          time === t ? "border-blue-500 bg-blue-50" : "border-neutral-200"
+                          time === t ? "border-purple-500 bg-purple-50" : "border-neutral-200"
                         }`}
                       >
                         {t}
@@ -969,7 +974,7 @@ export default function Home() {
                 )}
                 <button
                   onClick={pay}
-                  className="mt-2 rounded-lg bg-blue-600 py-2 text-sm text-white"
+                  className="mt-2 rounded-lg bg-purple-600 py-2 text-sm text-white"
                 >
                   {course.points > points ? "ポイントを購入する" : "確定する"}
                 </button>
@@ -1087,7 +1092,7 @@ export default function Home() {
                       key={i}
                       className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
                         m.from === "user"
-                          ? "ml-auto bg-blue-600 text-white"
+                          ? "ml-auto bg-purple-600 text-white"
                           : "bg-white border border-neutral-200"
                       }`}
                     >
@@ -1118,6 +1123,113 @@ export default function Home() {
               </div>
             )}
           </>
+        )}
+
+        {tab === "search" && (
+          <div className="flex flex-col gap-2">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="占い師名・得意分野でさがす"
+              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+            />
+            {providerList
+              .filter(
+                (p) =>
+                  p.name.includes(searchQuery) || p.tag.includes(searchQuery)
+              )
+              .map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
+                    {p.name[0]}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-neutral-500">
+                      {p.tag} ★{p.rating}
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      チャット {p.chatRate}pt/通
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
+                      {statusLabel[p.status]}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => {
+                          selectProvider(p);
+                          setTab("home");
+                        }}
+                        disabled={p.status !== "available"}
+                        className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                      >
+                        通話
+                      </button>
+                      <button
+                        onClick={() => {
+                          startChat(p);
+                          setTab("home");
+                        }}
+                        disabled={p.status === "off"}
+                        className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                      >
+                        チャット
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+
+        {tab === "history" && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">予約・利用履歴</p>
+            {history.length === 0 && (
+              <p className="text-xs text-neutral-400">まだ履歴はありません</p>
+            )}
+            {history.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
+              >
+                <div>
+                  <p className="text-sm">{h.label}</p>
+                  <p className="text-xs text-neutral-500">
+                    {h.detail} ・ {h.date}
+                  </p>
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    h.points >= 0 ? "text-emerald-600" : "text-red-600"
+                  }`}
+                >
+                  {h.points >= 0 ? "+" : ""}
+                  {h.points}pt
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "messages" && (
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-4 border-b border-neutral-200 pb-2 text-xs">
+              <span className="font-medium text-purple-700">あなた宛</span>
+              <span className="text-neutral-400">お気に入り</span>
+              <span className="text-neutral-400">タイムライン</span>
+            </div>
+            <p className="mt-10 text-center text-xs text-neutral-400">
+              鑑定師からあなたへのメッセージが届くと
+              <br />
+              ここに表示されます
+            </p>
+          </div>
         )}
 
         {tab === "shop" && (
@@ -1218,7 +1330,7 @@ export default function Home() {
                     </div>
                     <button
                       onClick={checkoutCart}
-                      className="rounded-lg bg-blue-600 py-2 text-sm text-white"
+                      className="rounded-lg bg-purple-600 py-2 text-sm text-white"
                     >
                       ポイントで購入する
                     </button>
@@ -1238,7 +1350,7 @@ export default function Home() {
               <div className="flex flex-col gap-3">
                 <div className="rounded-xl border border-neutral-200 bg-white p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-base font-medium text-blue-700">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-base font-medium text-purple-700">
                       {name ? name[0] : "?"}
                     </div>
                     <div>
@@ -1252,7 +1364,7 @@ export default function Home() {
                   </div>
                   <button
                     onClick={() => setMypageView("purchase")}
-                    className="mt-2 w-full rounded-lg bg-blue-600 py-2 text-sm text-white"
+                    className="mt-2 w-full rounded-lg bg-purple-600 py-2 text-sm text-white"
                   >
                     ポイントを購入する
                   </button>
@@ -1260,10 +1372,21 @@ export default function Home() {
 
                 <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-2">
                   <button
-                    onClick={() => setMypageView("history")}
+                    onClick={() => setTab("history")}
                     className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
                   >
                     <span>予約・利用履歴</span>
+                    <span className="text-neutral-400">›</span>
+                  </button>
+                  <div className="border-t border-neutral-100" />
+                  <button
+                    onClick={() => {
+                      setTab("shop");
+                      setShopView("list");
+                    }}
+                    className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
+                  >
+                    <span>占いグッズ(水晶・数珠など)</span>
                     <span className="text-neutral-400">›</span>
                   </button>
                   <div className="border-t border-neutral-100" />
@@ -1312,41 +1435,6 @@ export default function Home() {
                 <p className="text-xs text-neutral-400">
                   ※ 決済は現在ダミーです。Stripe接続後に実決済になります。
                 </p>
-              </div>
-            )}
-
-            {mypageView === "history" && (
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => setMypageView("top")}
-                  className="self-start text-xs text-neutral-500"
-                >
-                  ← マイページに戻る
-                </button>
-                <p className="text-sm font-medium">予約・利用履歴</p>
-                <div className="flex flex-col gap-2">
-                  {history.map((h) => (
-                    <div
-                      key={h.id}
-                      className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
-                    >
-                      <div>
-                        <p className="text-sm">{h.label}</p>
-                        <p className="text-xs text-neutral-500">
-                          {h.detail} ・ {h.date}
-                        </p>
-                      </div>
-                      <span
-                        className={`text-sm font-medium ${
-                          h.points >= 0 ? "text-emerald-600" : "text-red-600"
-                        }`}
-                      >
-                        {h.points >= 0 ? "+" : ""}
-                        {h.points}pt
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -1401,21 +1489,34 @@ export default function Home() {
           <button
             onClick={() => setTab("home")}
             className={`flex-1 py-3 text-xs ${
-              tab === "home" ? "font-medium text-neutral-900" : "text-neutral-400"
+              tab === "home" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
             ホーム
           </button>
           <button
-            onClick={() => {
-              setTab("shop");
-              setShopView("list");
-            }}
+            onClick={() => setTab("search")}
             className={`flex-1 py-3 text-xs ${
-              tab === "shop" ? "font-medium text-neutral-900" : "text-neutral-400"
+              tab === "search" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            物販
+            さがす
+          </button>
+          <button
+            onClick={() => setTab("history")}
+            className={`flex-1 py-3 text-xs ${
+              tab === "history" ? "font-medium text-purple-700" : "text-neutral-400"
+            }`}
+          >
+            履歴
+          </button>
+          <button
+            onClick={() => setTab("messages")}
+            className={`flex-1 py-3 text-xs ${
+              tab === "messages" ? "font-medium text-purple-700" : "text-neutral-400"
+            }`}
+          >
+            メッセージ
           </button>
           <button
             onClick={() => {
@@ -1423,10 +1524,10 @@ export default function Home() {
               setMypageView("top");
             }}
             className={`flex-1 py-3 text-xs ${
-              tab === "mypage" ? "font-medium text-neutral-900" : "text-neutral-400"
+              tab === "mypage" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            マイページ
+            マイメニュー
           </button>
         </div>
       </nav>
