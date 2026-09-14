@@ -14,6 +14,7 @@ type Provider = {
   reviewCount: number;
   styleTags: string[];
   bio: string;
+  photo: string;
 };
 
 type Course = {
@@ -74,6 +75,7 @@ const initialProviders: Provider[] = [
     reviewCount: 8420,
     styleTags: ["ゆったり", "初心者歓迎", "寄り添い"],
     bio: "タロット鑑定歴8年。恋愛・復縁・片想いを中心に、あなたの気持ちに寄り添いながら丁寧にお伝えします。焦らずゆっくりお話ししましょう。",
+    photo: "/provider1.jpg",
   },
   {
     id: "p2",
@@ -87,6 +89,7 @@ const initialProviders: Provider[] = [
     reviewCount: 5310,
     styleTags: ["具体的", "テンポが良い", "的確"],
     bio: "四柱推命歴12年。仕事運・金運の的中率に定評あり。結論から端的にお伝えするスタイルです。",
+    photo: "/provider2.jpg",
   },
   {
     id: "p3",
@@ -100,6 +103,7 @@ const initialProviders: Provider[] = [
     reviewCount: 2190,
     styleTags: ["スピリチュアル", "本格派", "リピーター多数"],
     bio: "霊視歴15年。目に見えないご縁や因縁、相手の本音を視ていきます。深い悩みほどお力になれます。",
+    photo: "/provider3.jpg",
   },
 ];
 
@@ -785,8 +789,8 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-base font-medium text-purple-700">
-                  {me.name[0]}
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-neutral-100">
+                  <img src={me.photo} alt={me.name} className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">{me.name}</p>
@@ -952,8 +956,12 @@ export default function Home() {
                       onClick={() => viewDetail(p)}
                       className="w-36 shrink-0 cursor-pointer"
                     >
-                      <div className="relative mb-2 h-36 w-36 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-200 via-purple-100 to-amber-100">
-                        <div className="flex h-full items-center justify-center text-3xl">🔮</div>
+                      <div className="relative mb-2 h-36 w-36 overflow-hidden rounded-2xl bg-neutral-100">
+                        <img
+                          src={p.photo}
+                          alt={p.name}
+                          className="h-full w-full object-cover"
+                        />
                         {i === 0 && (
                           <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-bold text-white">
                             殿堂入り
@@ -979,8 +987,8 @@ export default function Home() {
                       onClick={() => viewDetail(p)}
                       className="flex cursor-pointer items-center gap-3 rounded-2xl border border-purple-100 bg-white p-3"
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
-                        {p.name[0]}
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-neutral-100">
+                        <img src={p.photo} alt={p.name} className="h-full w-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{p.name}</p>
@@ -1027,8 +1035,12 @@ export default function Home() {
                   ← 一覧に戻る
                 </button>
 
-                <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
-                  <div className="flex h-full items-center justify-center text-3xl">🔮</div>
+                <div className="relative h-40 overflow-hidden rounded-2xl bg-neutral-100">
+                  <img
+                    src={provider.photo}
+                    alt={provider.name}
+                    className="h-full w-full object-cover"
+                  />
                   <button
                     onClick={() => toggleFavorite(provider.id)}
                     className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs"
@@ -1227,9 +1239,11 @@ export default function Home() {
             {step === "call" && provider && course && (
               <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3">
                 <div className="relative h-48 overflow-hidden rounded-lg bg-neutral-800">
-                  <div className="flex h-full items-center justify-center text-xs text-neutral-400">
-                    {provider.name}(メイン映像)
-                  </div>
+                  <img
+                    src={provider.photo}
+                    alt={provider.name}
+                    className="h-full w-full object-cover opacity-90"
+                  />
                   <div className="absolute right-2 top-2 flex h-14 w-20 items-center justify-center rounded bg-neutral-700 text-center text-[10px] text-neutral-300">
                     手元
                     <br />
