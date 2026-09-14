@@ -1947,11 +1947,11 @@ export default function Home() {
         </div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 flex justify-center border-t border-neutral-200 bg-white">
+      <nav className="fixed inset-x-0 bottom-0 flex justify-center border-t border-neutral-200 bg-white" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="relative flex w-full max-w-sm items-end">
           <button
             onClick={() => setTab("messages")}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+            className={`flex flex-1 flex-col items-center gap-0.5 pt-4 pb-1 text-[10px] ${
               tab === "messages" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
@@ -1963,7 +1963,7 @@ export default function Home() {
               setTab("shop");
               setShopView("list");
             }}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+            className={`flex flex-1 flex-col items-center gap-0.5 pt-4 pb-1 text-[10px] ${
               tab === "shop" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
@@ -1991,7 +1991,7 @@ export default function Home() {
 
           <button
             onClick={() => setTab("history")}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+            className={`flex flex-1 flex-col items-center gap-0.5 pt-4 pb-1 text-[10px] ${
               tab === "history" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
@@ -2003,7 +2003,7 @@ export default function Home() {
               setTab("mypage");
               setMypageView("top");
             }}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+            className={`flex flex-1 flex-col items-center gap-0.5 pt-4 pb-1 text-[10px] ${
               tab === "mypage" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
