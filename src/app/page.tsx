@@ -258,6 +258,55 @@ export default function Home() {
       .catch(() => setProvidersLoaded(true));
   }, []);
 
+  // ログイン状態の永続化(ログアウトするまで保持)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("suginoizumi_session");
+      if (!saved) return;
+      const session = JSON.parse(saved);
+      if (session.authStep === "app") {
+        setName(session.name || "");
+        setBirthday(session.birthday || "");
+        setGender(session.gender || "");
+        setBloodType(session.bloodType || "");
+        setEmail(session.email || "");
+        setRegistered(true);
+        setAuthStep("app");
+      } else if (session.authStep === "admin" || session.authStep === "provider") {
+        setAuthStep(session.authStep);
+      }
+    } catch {
+      // 保存データが壊れている場合は無視してログイン画面のまま
+    }
+  }, []);
+
+  function saveSession(step: "app" | "admin" | "provider") {
+    try {
+      localStorage.setItem(
+        "suginoizumi_session",
+        JSON.stringify({
+          authStep: step,
+          name,
+          birthday,
+          gender,
+          bloodType,
+          email,
+        })
+      );
+    } catch {
+      // localStorageが使えない環境では何もしない(セッションはタブを閉じるまでのみ保持)
+    }
+  }
+
+  function clearSession() {
+    try {
+      localStorage.removeItem("suginoizumi_session");
+    } catch {
+      // no-op
+    }
+    setAuthStep("login");
+  }
+
   function openNewProviderForm() {
     setEditingProviderId("new");
     setProviderForm({ name: "", tag: "", chatRate: "", callRate: "", mailRate: "", bio: "" });
@@ -394,10 +443,12 @@ export default function Home() {
     }
     if (loginEmail === "z" && loginPassword === "z") {
       setAuthStep("admin");
+      saveSession("admin");
       return;
     }
     if (loginEmail === "b" && loginPassword === "b") {
       setAuthStep("provider");
+      saveSession("provider");
       return;
     }
     if (loginEmail === "a" && loginPassword === "a") {
@@ -409,6 +460,8 @@ export default function Home() {
         setRegistered(true);
       }
       setAuthStep("app");
+      // saveSessionはstate更新の反映を待つため次のレンダー後に実行
+      setTimeout(() => saveSession("app"), 0);
       return;
     }
     setLoginError("ログイン情報が正しくありません");
@@ -422,6 +475,7 @@ export default function Home() {
     setFormError("");
     setRegistered(true);
     setAuthStep("app");
+    setTimeout(() => saveSession("app"), 0);
   }
 
   function startChat(p: Provider) {
@@ -698,7 +752,7 @@ export default function Home() {
               <span className="h-0.5 w-5 bg-white" />
             </button>
             <h1 className="text-sm font-bold text-white">管理者モード</h1>
-            <button onClick={() => setAuthStep("login")} className="text-xs text-white/70">
+            <button onClick={() => clearSession()} className="text-xs text-white/70">
               ログアウト
             </button>
           </div>
@@ -1081,7 +1135,7 @@ export default function Home() {
         <div className="w-full max-w-sm">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-lg font-medium">占い師モード</h1>
-            <button onClick={() => setAuthStep("login")} className="text-xs text-neutral-500">
+            <button onClick={() => clearSession()} className="text-xs text-neutral-500">
               ログアウト
             </button>
           </div>
@@ -2007,7 +2061,7 @@ export default function Home() {
                 </div>
 
                 <button
-                  onClick={() => setAuthStep("login")}
+                  onClick={() => clearSession()}
                   className="rounded-lg border border-neutral-200 bg-white py-2 text-sm text-neutral-500"
                 >
                   ログアウト
