@@ -45,6 +45,7 @@ type Product = {
   points: number;
   desc: string;
   thumb: string;
+  image: string;
 };
 
 type ChatMsg = {
@@ -128,6 +129,7 @@ const products: Product[] = [
     points: 3200,
     desc: "浄化・魔除けの意味を持つ紫水晶のブレスレット",
     thumb: "from-purple-300 to-purple-100",
+    image: "/product-amethyst.jpg",
   },
   {
     id: "pr2",
@@ -136,6 +138,7 @@ const products: Product[] = [
     points: 2800,
     desc: "恋愛運アップの定番、淡いピンクの天然石",
     thumb: "from-pink-300 to-pink-100",
+    image: "/product-rosequartz.jpg",
   },
   {
     id: "pr3",
@@ -144,6 +147,7 @@ const products: Product[] = [
     points: 1500,
     desc: "浄化用のさざれ石。他の石の浄化にも使える",
     thumb: "from-sky-200 to-neutral-100",
+    image: "/product-rosequartz.jpg",
   },
   {
     id: "pr4",
@@ -152,6 +156,7 @@ const products: Product[] = [
     points: 4500,
     desc: "法事・お参り用の正式な本連数珠",
     thumb: "from-neutral-400 to-neutral-200",
+    image: "/product-juzu.jpg",
   },
   {
     id: "pr5",
@@ -160,6 +165,7 @@ const products: Product[] = [
     points: 2200,
     desc: "普段使いしやすいシンプルな略式数珠",
     thumb: "from-amber-200 to-neutral-100",
+    image: "/product-juzu.jpg",
   },
   {
     id: "pr6",
@@ -168,6 +174,7 @@ const products: Product[] = [
     points: 3800,
     desc: "紗希先生が実際に使用している78枚デッキと同モデル",
     thumb: "from-indigo-300 to-amber-100",
+    image: "/product-tarot.jpg",
   },
 ];
 
@@ -923,20 +930,20 @@ export default function Home() {
   return (
     <div className="h-[100dvh] overflow-hidden bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-8">
       <div className="flex h-full w-full max-w-sm flex-col bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl overflow-hidden">
-        <div className="relative h-32 shrink-0 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
-          <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10" />
+        <div className="relative h-20 shrink-0 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/10" />
           <button
             onClick={() => {
               setTab("mypage");
               setMypageView("top");
             }}
-            className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-purple-800"
+            className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-purple-800"
           >
             保有 {points}pt
           </button>
-          <div className="relative flex h-full items-center gap-2 p-5 pb-4">
-            <img src="/home-icon.png" alt="" className="h-20 w-20 object-contain" />
-            <h1 className="text-xl font-bold text-white">杉の泉</h1>
+          <div className="relative flex h-full items-center gap-2 px-5 pb-2 pt-9">
+            <img src="/home-icon.png" alt="" className="h-11 w-11 object-contain" />
+            <h1 className="text-lg font-bold text-white">杉の泉</h1>
           </div>
         </div>
 
@@ -1455,10 +1462,12 @@ export default function Home() {
                             }}
                             className="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left"
                           >
-                            <div
-                              className={`flex aspect-square items-center justify-center bg-gradient-to-br ${p.thumb} text-3xl`}
-                            >
-                              💎
+                            <div className="aspect-square overflow-hidden bg-neutral-100">
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                className="h-full w-full object-cover"
+                              />
                             </div>
                             <div className="p-2">
                               <p className="line-clamp-2 text-xs font-medium text-neutral-900">
@@ -1488,10 +1497,12 @@ export default function Home() {
                   const p = productMap[selectedProductId];
                   return (
                     <>
-                      <div
-                        className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${p.thumb} text-6xl`}
-                      >
-                        💎
+                      <div className="aspect-square overflow-hidden rounded-2xl bg-neutral-100">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="h-full w-full object-cover"
+                        />
                       </div>
                       <p className="text-xs font-medium text-purple-700">{p.category}</p>
                       <p className="text-base font-bold text-neutral-900">{p.name}</p>
@@ -1853,7 +1864,7 @@ export default function Home() {
           <div className="flex flex-1 justify-center">
             <button
               onClick={() => setTab("home")}
-              className={`absolute -top-12 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 p-3 shadow-lg ring-4 ring-white ${
+              className={`absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 p-2 shadow-lg ring-4 ring-white ${
                 tab === "home" ? "ring-purple-200" : ""
               }`}
             >
