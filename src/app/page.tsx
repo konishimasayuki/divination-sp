@@ -324,6 +324,70 @@ export default function Home() {
   const [agoraCertificate, setAgoraCertificate] = useState("");
   const [agoraSaved, setAgoraSaved] = useState(false);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
+  const [providerForm, setProviderForm] = useState({
+    name: "",
+    tag: "",
+    chatRate: "",
+    callRate: "",
+    mailRate: "",
+    bio: "",
+  });
+
+  function openNewProviderForm() {
+    setEditingProviderId("new");
+    setProviderForm({ name: "", tag: "", chatRate: "", callRate: "", mailRate: "", bio: "" });
+  }
+
+  function openEditProviderForm(p: Provider) {
+    setEditingProviderId(p.id);
+    setProviderForm({
+      name: p.name,
+      tag: p.tag,
+      chatRate: String(p.chatRate),
+      callRate: String(p.callRate),
+      mailRate: String(p.mailRate),
+      bio: p.bio,
+    });
+  }
+
+  function saveProviderForm() {
+    if (!providerForm.name.trim() || !providerForm.tag.trim()) return;
+    if (editingProviderId === "new") {
+      const newProvider: Provider = {
+        id: `p${Date.now()}`,
+        name: `${providerForm.name}(デモ)`,
+        tag: providerForm.tag,
+        rating: 4.5,
+        status: "off",
+        chatRate: Number(providerForm.chatRate) || 50,
+        callRate: Number(providerForm.callRate) || 120,
+        mailRate: Number(providerForm.mailRate) || 3000,
+        reviewCount: 0,
+        styleTags: [],
+        bio: providerForm.bio,
+        photo: "/provider1.jpg",
+      };
+      setProviderList((prev) => [...prev, newProvider]);
+    } else if (editingProviderId) {
+      setProviderList((prev) =>
+        prev.map((p) =>
+          p.id === editingProviderId
+            ? {
+                ...p,
+                name: providerForm.name,
+                tag: providerForm.tag,
+                chatRate: Number(providerForm.chatRate) || p.chatRate,
+                callRate: Number(providerForm.callRate) || p.callRate,
+                mailRate: Number(providerForm.mailRate) || p.mailRate,
+                bio: providerForm.bio,
+              }
+            : p
+        )
+      );
+    }
+    setEditingProviderId(null);
+  }
   const loggedInProviderId = "p1"; // デモ: 占い師ログイン時は紗希先生として扱う
 
   function updateProviderStatus(id: string, status: Provider["status"]) {
@@ -781,45 +845,131 @@ export default function Home() {
             </div>
           )}
 
-          {adminView === "providers" && (
+          {adminView === "providers" && !editingProviderId && (
             <div className="flex flex-col gap-3">
-              <button
-                onClick={() => setAdminView("overview")}
-                className="self-start text-xs text-neutral-500"
-              >
-                ← 概要に戻る
-              </button>
-              <p className="text-sm font-medium">占い師管理</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-neutral-900">占い師管理</p>
+                <button
+                  onClick={openNewProviderForm}
+                  className="rounded-lg bg-purple-700 px-3 py-1.5 text-xs font-medium text-white"
+                >
+                  ＋ 占い師を追加
+                </button>
+              </div>
               {providerList.map((p) => (
                 <div key={p.id} className="rounded-xl border border-neutral-200 bg-white p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">{p.name}</p>
                       <p className="text-xs text-neutral-500">
-                        {p.tag} ★{p.rating} ・チャット{p.chatRate}pt/通
+                        {p.tag} ★{p.rating} ・チャット{p.chatRate}pt/文字
                       </p>
                     </div>
                     <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
                       {statusLabel[p.status]}
                     </span>
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    {(["available", "busy", "off"] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => updateProviderStatus(p.id, s)}
-                        className={`flex-1 rounded border py-1 text-xs ${
-                          p.status === s
-                            ? "border-neutral-900 bg-neutral-900 text-white"
-                            : "border-neutral-200"
-                        }`}
-                      >
-                        {statusLabel[s]}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="mt-1 text-[11px] text-neutral-400">
+                    ※ 対応可否は占い師本人が設定するため、管理者からは変更できません
+                  </p>
+                  <button
+                    onClick={() => openEditProviderForm(p)}
+                    className="mt-2 w-full rounded border border-neutral-200 py-1.5 text-xs"
+                  >
+                    内容を編集する
+                  </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {adminView === "providers" && editingProviderId && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setEditingProviderId(null)}
+                className="self-start text-xs text-neutral-500"
+              >
+                ← 一覧に戻る
+              </button>
+              <p className="text-sm font-bold text-neutral-900">
+                {editingProviderId === "new" ? "占い師を追加" : "占い師情報の編集"}
+              </p>
+              <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">名前</span>
+                  <input
+                    value={providerForm.name}
+                    onChange={(e) =>
+                      setProviderForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                    placeholder="例: 心先生"
+                    className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">得意分野</span>
+                  <input
+                    value={providerForm.tag}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, tag: e.target.value }))}
+                    placeholder="例: 西洋占星術・恋愛"
+                    className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                  />
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs text-neutral-600">チャット単価</span>
+                    <input
+                      value={providerForm.chatRate}
+                      onChange={(e) =>
+                        setProviderForm((f) => ({ ...f, chatRate: e.target.value }))
+                      }
+                      placeholder="50"
+                      inputMode="numeric"
+                      className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs text-neutral-600">通話単価</span>
+                    <input
+                      value={providerForm.callRate}
+                      onChange={(e) =>
+                        setProviderForm((f) => ({ ...f, callRate: e.target.value }))
+                      }
+                      placeholder="120"
+                      inputMode="numeric"
+                      className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs text-neutral-600">メール単価</span>
+                    <input
+                      value={providerForm.mailRate}
+                      onChange={(e) =>
+                        setProviderForm((f) => ({ ...f, mailRate: e.target.value }))
+                      }
+                      placeholder="3000"
+                      inputMode="numeric"
+                      className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                    />
+                  </label>
+                </div>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">プロフィール文</span>
+                  <textarea
+                    value={providerForm.bio}
+                    onChange={(e) => setProviderForm((f) => ({ ...f, bio: e.target.value }))}
+                    rows={4}
+                    placeholder="鑑定歴や得意な相談内容などを入力"
+                    className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                  />
+                </label>
+                <button
+                  onClick={saveProviderForm}
+                  className="rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white"
+                >
+                  {editingProviderId === "new" ? "追加する" : "保存する"}
+                </button>
+              </div>
             </div>
           )}
 
