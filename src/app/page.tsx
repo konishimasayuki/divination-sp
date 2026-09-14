@@ -468,14 +468,10 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-10">
         <div className="w-full max-w-sm overflow-hidden bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl">
-          <div className="relative h-52 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+          <div className="relative flex h-52 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
             <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
             <div className="absolute -bottom-10 left-10 h-24 w-24 rounded-full bg-white/10" />
-            <div className="relative flex h-full flex-col justify-end p-5">
-              <p className="text-[10px] tracking-[0.2em] text-white/70">SUGINOIZUMI ONLINE</p>
-              <h1 className="text-4xl font-bold text-white">杉の泉</h1>
-              <p className="mt-1 text-xs text-white/70">運命を、あなたの味方に</p>
-            </div>
+            <img src="/logo.png" alt="杉の泉" className="relative h-40 w-40 object-contain" />
           </div>
 
           <div className="px-6 py-6">
@@ -926,8 +922,8 @@ export default function Home() {
           >
             保有 {points}pt
           </button>
-          <div className="relative flex h-full flex-col justify-end p-5 pb-4">
-            <p className="text-[9px] tracking-[0.2em] text-white/70">SUGINOIZUMI ONLINE</p>
+          <div className="relative flex h-full items-center gap-2 p-5 pb-4">
+            <img src="/home-icon.png" alt="" className="h-10 w-10 object-contain" />
             <h1 className="text-xl font-bold text-white">杉の泉</h1>
           </div>
         </div>
@@ -1784,11 +1780,11 @@ export default function Home() {
           <div className="flex flex-1 justify-center">
             <button
               onClick={() => setTab("home")}
-              className={`absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full text-2xl shadow-lg ring-4 ring-white ${
-                tab === "home" ? "bg-purple-700" : "bg-purple-500"
+              className={`absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-white p-2 shadow-lg ring-4 ring-white ${
+                tab === "home" ? "ring-purple-200" : ""
               }`}
             >
-              🔮
+              <img src="/home-icon.png" alt="ホーム" className="h-full w-full object-contain" />
             </button>
           </div>
 
