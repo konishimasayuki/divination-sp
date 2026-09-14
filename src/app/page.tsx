@@ -63,7 +63,7 @@ type ShopView = "list" | "cart";
 const initialProviders: Provider[] = [
   {
     id: "p1",
-    name: "紗希先生",
+    name: "紗希先生(デモ)",
     tag: "タロット・恋愛",
     rating: 4.9,
     status: "available",
@@ -76,7 +76,7 @@ const initialProviders: Provider[] = [
   },
   {
     id: "p2",
-    name: "蓮先生",
+    name: "蓮先生(デモ)",
     tag: "四柱推命",
     rating: 4.8,
     status: "busy",
@@ -89,7 +89,7 @@ const initialProviders: Provider[] = [
   },
   {
     id: "p3",
-    name: "美月先生",
+    name: "美月先生(デモ)",
     tag: "霊感・霊視",
     rating: 4.7,
     status: "off",
@@ -466,50 +466,63 @@ export default function Home() {
   // ---------- ログイン画面 ----------
   if (authStep === "login") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white flex justify-center py-10 px-4">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-2xl">
-              🔮
+      <div className="min-h-screen bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-10">
+        <div className="w-full max-w-sm overflow-hidden bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl">
+          <div className="relative h-52 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
+            <div className="absolute -bottom-10 left-10 h-24 w-24 rounded-full bg-white/10" />
+            <div className="relative flex h-full flex-col justify-end p-5">
+              <p className="text-[10px] tracking-[0.2em] text-white/70">SUGINOIZUMI ONLINE</p>
+              <h1 className="text-4xl font-bold text-white">杉の泉</h1>
+              <p className="mt-1 text-xs text-white/70">運命を、あなたの味方に</p>
             </div>
-            <h1 className="text-2xl font-bold tracking-wide text-purple-950">杉の泉</h1>
-            <p className="mt-1 text-xs text-purple-400">運命を、あなたの味方に</p>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">メールアドレス</span>
-              <input
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">パスワード</span>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              />
-            </label>
-            {loginError && <p className="text-xs text-red-600">{loginError}</p>}
+          <div className="px-6 py-6">
+            <div className="rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
+              <p className="mb-3 text-xs font-medium text-neutral-500">ログイン</p>
+              <div className="flex flex-col gap-2">
+                <input
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                />
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                />
+                {loginError && <p className="text-xs text-red-600">{loginError}</p>}
+                <button
+                  onClick={handleLogin}
+                  className="mt-1 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500 py-3 text-sm font-bold text-white shadow-sm"
+                >
+                  ログイン
+                </button>
+              </div>
+            </div>
             <button
-              onClick={handleLogin}
-              className="mt-1 rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white"
+              onClick={() => setAuthStep("register")}
+              className="mt-4 w-full text-center text-xs text-purple-700 underline"
             >
-              ログイン
+              はじめての方はこちら(会員登録)
             </button>
+
+            <div className="mt-8 flex items-center gap-3 text-center">
+              <div className="h-px flex-1 bg-neutral-200" />
+              <p className="text-[10px] text-neutral-400">今月の特集</p>
+              <div className="h-px flex-1 bg-neutral-200" />
+            </div>
+            <div className="mt-3 rounded-2xl bg-gradient-to-r from-amber-100 to-purple-100 p-4">
+              <p className="text-xs font-bold text-neutral-800">初回登録で 500pt プレゼント</p>
+              <p className="mt-1 text-[11px] text-neutral-500">
+                会員登録するとすぐに鑑定をお試しいただけます
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => setAuthStep("register")}
-            className="mt-4 w-full text-center text-xs text-purple-600 underline"
-          >
-            はじめての方はこちら(会員登録)
-          </button>
         </div>
       </div>
     );
@@ -900,66 +913,104 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex justify-center pb-20 pt-8 px-4">
-      <div className="w-full max-w-sm">
-        <header className="mb-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-purple-950">杉の泉</h1>
+    <div className="min-h-screen bg-[#faf7f2] flex justify-center pb-20 px-0 sm:px-4 sm:py-8">
+      <div className="w-full max-w-sm bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl overflow-hidden">
+        <div className="relative h-24 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+          <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10" />
           <button
             onClick={() => {
               setTab("mypage");
               setMypageView("top");
             }}
-            className="text-sm text-neutral-500"
+            className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-purple-800"
           >
             保有 {points}pt
           </button>
-        </header>
+          <div className="relative flex h-full flex-col justify-end p-5 pb-4">
+            <p className="text-[9px] tracking-[0.2em] text-white/70">SUGINOIZUMI ONLINE</p>
+            <h1 className="text-xl font-bold text-white">杉の泉</h1>
+          </div>
+        </div>
+
+        <div className="px-5 py-5">
 
         {tab === "home" && (
           <>
             {step === "providers" && (
-              <div className="flex flex-col gap-2">
-                {providerList.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => viewDetail(p)}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
-                      {p.name[0]}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{p.name}</p>
-                      <p className="text-xs text-neutral-500">
-                        {p.tag} ★{p.rating}({p.reviewCount.toLocaleString()}件)
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-neutral-900">今、話せる占い師</h2>
+                </div>
+                <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
+                  {providerList.map((p, i) => (
+                    <div
+                      key={p.id}
+                      onClick={() => viewDetail(p)}
+                      className="w-36 shrink-0 cursor-pointer"
+                    >
+                      <div className="relative mb-2 h-36 w-36 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-200 via-purple-100 to-amber-100">
+                        <div className="flex h-full items-center justify-center text-3xl">🔮</div>
+                        {i === 0 && (
+                          <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-bold text-white">
+                            殿堂入り
+                          </span>
+                        )}
+                        <span className={`absolute bottom-1.5 right-1.5 rounded-full px-2 py-0.5 text-[9px] ${statusStyle[p.status]}`}>
+                          {statusLabel[p.status]}
+                        </span>
+                      </div>
+                      <p className="truncate text-xs font-bold text-neutral-900">{p.name}</p>
+                      <p className="truncate text-[10px] text-neutral-500">{p.tag}</p>
+                      <p className="mt-0.5 text-[10px] font-medium text-purple-700">
+                        ★{p.rating} ・ {p.chatRate}pt/文字
                       </p>
-                      <p className="text-xs text-neutral-400">
-                        チャット {p.chatRate}pt/文字
-                      </p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
-                        {statusLabel[p.status]}
-                      </span>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => selectProvider(p)}
-                          disabled={p.status !== "available"}
-                          className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          通話
-                        </button>
-                        <button
-                          onClick={() => startChat(p)}
-                          disabled={p.status === "off"}
-                          className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
-                        >
-                          チャット
-                        </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {providerList.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => viewDetail(p)}
+                      className="flex cursor-pointer items-center gap-3 rounded-2xl border border-purple-100 bg-white p-3"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
+                        {p.name[0]}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{p.name}</p>
+                        <p className="text-xs text-neutral-500">
+                          {p.tag} ★{p.rating}({p.reviewCount.toLocaleString()}件)
+                        </p>
+                        <p className="text-xs text-neutral-400">
+                          チャット {p.chatRate}pt/文字
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
+                          {statusLabel[p.status]}
+                        </span>
+                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => selectProvider(p)}
+                            disabled={p.status !== "available"}
+                            className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                          >
+                            通話
+                          </button>
+                          <button
+                            onClick={() => startChat(p)}
+                            disabled={p.status === "off"}
+                            className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
+                          >
+                            チャット
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
@@ -972,10 +1023,8 @@ export default function Home() {
                   ← 一覧に戻る
                 </button>
 
-                <div className="relative h-40 overflow-hidden rounded-xl bg-gradient-to-br from-purple-700 to-purple-400">
-                  <div className="flex h-full items-center justify-center text-sm text-white/80">
-                    {provider.name} のイメージ画像
-                  </div>
+                <div className="relative h-40 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+                  <div className="flex h-full items-center justify-center text-3xl">🔮</div>
                   <button
                     onClick={() => toggleFavorite(provider.id)}
                     className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs"
@@ -1889,6 +1938,7 @@ export default function Home() {
             )}
           </>
         )}
+        </div>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 flex justify-center border-t border-neutral-200 bg-white">
