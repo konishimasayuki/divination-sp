@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { type Provider, initialProviders } from "@/lib/providers-data";
 
 type Course = {
@@ -229,7 +229,7 @@ export default function Home() {
   const [providersLoaded, setProvidersLoaded] = useState(false);
   const [providerSaveError, setProviderSaveError] = useState("");
   const [adminView, setAdminView] = useState<
-    "overview" | "providers" | "history" | "settings" | "api" | "legal"
+    "overview" | "providers" | "history" | "settings" | "api" | "legal" | "video-test"
   >("overview");
   const [stripePubKey, setStripePubKey] = useState("");
   const [stripeSecretKey, setStripeSecretKey] = useState("");
@@ -385,6 +385,35 @@ export default function Home() {
   const [bioDraft, setBioDraft] = useState("");
   const [bioEditing, setBioEditing] = useState(false);
   const [bioSaveError, setBioSaveError] = useState("");
+  const [videoTestLayout, setVideoTestLayout] = useState<
+    "full-pinp" | "split" | "circle-overlay"
+  >("full-pinp");
+  const [videoTestActive, setVideoTestActive] = useState(false);
+  const [videoTestError, setVideoTestError] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoStreamRef = useRef<MediaStream | null>(null);
+
+  async function startVideoTest() {
+    setVideoTestError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      videoStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setVideoTestActive(true);
+    } catch {
+      setVideoTestError(
+        "カメラにアクセスできませんでした。ブラウザのカメラ許可設定を確認してください。"
+      );
+    }
+  }
+
+  function stopVideoTest() {
+    videoStreamRef.current?.getTracks().forEach((t) => t.stop());
+    videoStreamRef.current = null;
+    setVideoTestActive(false);
+  }
 
   async function saveBio(providerId: string) {
     setBioSaveError("");
@@ -784,6 +813,7 @@ export default function Home() {
       { key: "overview", label: "概要" },
       { key: "providers", label: "占い師管理" },
       { key: "history", label: "全取引履歴" },
+      { key: "video-test", label: "ビデオテスト" },
       { key: "api", label: "API設定(Stripe・Agora等)" },
       { key: "legal", label: "規約・法務関連(準備中)" },
     ];
@@ -1160,6 +1190,120 @@ export default function Home() {
               <p className="text-[11px] text-neutral-400">
                 ※ この画面自体には保存機能はありません(ブラウザを閉じると消えます)。あくまで入力内容の確認・共有用です。
               </p>
+            </div>
+          )}
+
+          {adminView === "video-test" && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-bold text-neutral-900">ビデオテスト</p>
+              <p className="text-xs text-neutral-500">
+                Agoraの実装前に、通話画面の見せ方(レイアウト)をご自身のカメラで試せます。
+              </p>
+
+              <div className="flex gap-2 text-xs">
+                {(
+                  [
+                    { key: "full-pinp", label: "全面+手元PinP" },
+                    { key: "split", label: "上下分割" },
+                    { key: "circle-overlay", label: "丸型オーバーレイ" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setVideoTestLayout(opt.key)}
+                    className={`flex-1 rounded-full py-2 ${
+                      videoTestLayout === opt.key
+                        ? "bg-purple-700 text-white"
+                        : "bg-neutral-100 text-neutral-600"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative h-72 overflow-hidden rounded-2xl bg-neutral-900">
+                {!videoTestActive && (
+                  <div className="flex h-full items-center justify-center">
+                    <button
+                      onClick={startVideoTest}
+                      className="rounded-lg bg-white px-4 py-2 text-xs font-medium text-neutral-900"
+                    >
+                      カメラを開始する
+                    </button>
+                  </div>
+                )}
+
+                {videoTestLayout === "full-pinp" && (
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className={`h-full w-full object-cover ${videoTestActive ? "" : "hidden"}`}
+                    />
+                    {videoTestActive && (
+                      <div className="absolute right-3 top-3 flex h-20 w-16 items-center justify-center rounded bg-neutral-700 text-[10px] text-neutral-300">
+                        手元映像
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {videoTestLayout === "split" && videoTestActive && (
+                  <div className="flex h-full flex-col">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="h-1/2 w-full object-cover"
+                    />
+                    <div className="flex h-1/2 items-center justify-center bg-neutral-800 text-xs text-neutral-400">
+                      お客様側映像(サンプル)
+                    </div>
+                  </div>
+                )}
+
+                {videoTestLayout === "circle-overlay" && videoTestActive && (
+                  <div className="relative h-full w-full bg-gradient-to-br from-purple-800 to-purple-500">
+                    <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full ring-4 ring-white">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {videoTestActive && (
+                  <div className="absolute bottom-2 left-2 rounded bg-black/40 px-2 py-1 text-[10px] text-white">
+                    {videoTestLayout === "full-pinp" && "全面表示 + 手元映像を右上に小窓表示"}
+                    {videoTestLayout === "split" && "画面を上下に分割して両者を表示"}
+                    {videoTestLayout === "circle-overlay" && "丸型のビデオウィンドウを中央に配置"}
+                  </div>
+                )}
+              </div>
+
+              {videoTestError && <p className="text-xs text-red-600">{videoTestError}</p>}
+
+              {videoTestActive && (
+                <button
+                  onClick={stopVideoTest}
+                  className="rounded-lg border border-neutral-200 py-2 text-xs text-neutral-600"
+                >
+                  カメラを停止する
+                </button>
+              )}
+
+              <div className="rounded-lg bg-amber-50 p-3 text-[11px] text-amber-800">
+                ※ これはご自身のカメラを使った見た目の確認用です。実際の1対1通話(相手の映像を表示する部分)は、AgoraのApp
+                IDを設定して実装した後に反映されます。
+              </div>
             </div>
           )}
 
