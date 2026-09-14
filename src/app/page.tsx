@@ -424,7 +424,7 @@ export default function Home() {
     { id: "h1", label: "初回登録特典", detail: "新規登録ボーナス", points: 800, date: "9/1" },
   ]);
 
-  // チャット占い
+  // メッセージ占い
   const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
@@ -503,7 +503,7 @@ export default function Home() {
     setHistory((prev) => [
       {
         id: `h${prev.length + 1}`,
-        label: `${provider.name} チャット占い`,
+        label: `${provider.name} メッセージ占い`,
         detail: text.slice(0, 20),
         points: -provider.chatRate,
         date: "本日",
@@ -854,7 +854,7 @@ export default function Home() {
                     <div>
                       <p className="text-sm font-medium">{p.name}</p>
                       <p className="text-xs text-neutral-500">
-                        {p.tag} ★{p.rating} ・チャット{p.chatRate}pt/文字
+                        {p.tag} ★{p.rating} ・メッセージ{p.chatRate}pt/文字
                       </p>
                     </div>
                     <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
@@ -907,9 +907,9 @@ export default function Home() {
                     className="rounded border border-neutral-200 px-2 py-2 text-sm"
                   />
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">チャット単価</span>
+                    <span className="text-xs text-neutral-600">メッセージ単価(1文字)</span>
                     <input
                       value={providerForm.chatRate}
                       onChange={(e) =>
@@ -921,25 +921,13 @@ export default function Home() {
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">通話単価</span>
+                    <span className="text-xs text-neutral-600">通話単価(1分)</span>
                     <input
                       value={providerForm.callRate}
                       onChange={(e) =>
                         setProviderForm((f) => ({ ...f, callRate: e.target.value }))
                       }
                       placeholder="120"
-                      inputMode="numeric"
-                      className="rounded border border-neutral-200 px-2 py-2 text-sm"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">メール単価</span>
-                    <input
-                      value={providerForm.mailRate}
-                      onChange={(e) =>
-                        setProviderForm((f) => ({ ...f, mailRate: e.target.value }))
-                      }
-                      placeholder="3000"
                       inputMode="numeric"
                       className="rounded border border-neutral-200 px-2 py-2 text-sm"
                     />
@@ -1149,7 +1137,7 @@ export default function Home() {
                 <div>
                   <p className="text-sm font-medium">{me.name}</p>
                   <p className="text-xs text-neutral-500">
-                    {me.tag} ★{me.rating} ・チャット{me.chatRate}pt/通
+                    {me.tag} ★{me.rating} ・メッセージ{me.chatRate}pt/文字
                   </p>
                 </div>
               </div>
@@ -1369,7 +1357,7 @@ export default function Home() {
                           {p.tag} ★{p.rating}({p.reviewCount.toLocaleString()}件)
                         </p>
                         <p className="text-xs text-neutral-400">
-                          チャット {p.chatRate}pt/文字
+                          メッセージ {p.chatRate}pt/文字
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -1389,7 +1377,7 @@ export default function Home() {
                             disabled={p.status === "off"}
                             className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
                           >
-                            チャット
+                            メッセージ
                           </button>
                         </div>
                       </div>
@@ -1490,7 +1478,7 @@ export default function Home() {
                       disabled={provider.status === "off"}
                       className="flex-1 bg-purple-700 py-3 text-center text-xs text-white disabled:opacity-40"
                     >
-                      チャット
+                      メッセージ
                       <br />
                       {provider.chatRate}pt / 1文字
                     </button>
@@ -1499,17 +1487,9 @@ export default function Home() {
                       disabled={provider.status !== "available"}
                       className="flex-1 bg-purple-600 py-3 text-center text-xs text-white disabled:opacity-40"
                     >
-                      電話
+                      通話
                       <br />
                       {provider.callRate}pt / 1分
-                    </button>
-                    <button
-                      disabled
-                      className="flex-1 bg-purple-500 py-3 text-center text-xs text-white opacity-60"
-                    >
-                      メール
-                      <br />
-                      {provider.mailRate.toLocaleString()}pt / 1回
                     </button>
                   </div>
                 </div>
@@ -1715,7 +1695,7 @@ export default function Home() {
                     1通 {provider.chatRate}pt ・ 保有 {points}pt
                   </p>
                 </div>
-                <p className="text-sm font-medium">{provider.name} とチャット占い</p>
+                <p className="text-sm font-medium">{provider.name} とメッセージ占い</p>
                 <div className="flex max-h-72 flex-col gap-2 overflow-y-auto rounded-lg bg-neutral-50 p-3">
                   {chatMsgs.map((m, i) => (
                     <div
