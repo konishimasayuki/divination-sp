@@ -11,6 +11,8 @@ export type Provider = {
   styleTags: string[];
   bio: string;
   photo: string;
+  loginId: string;
+  loginPassword: string;
 };
 
 export const initialProviders: Provider[] = [
@@ -27,6 +29,8 @@ export const initialProviders: Provider[] = [
     styleTags: ["ゆったり", "初心者歓迎", "寄り添い"],
     bio: "タロット鑑定歴8年。恋愛・復縁・片想いを中心に、あなたの気持ちに寄り添いながら丁寧にお伝えします。焦らずゆっくりお話ししましょう。",
     photo: "/provider1.jpg",
+    loginId: "sasaki",
+    loginPassword: "sasaki123",
   },
   {
     id: "p2",
@@ -41,6 +45,8 @@ export const initialProviders: Provider[] = [
     styleTags: ["具体的", "テンポが良い", "的確"],
     bio: "四柱推命歴12年。仕事運・金運の的中率に定評あり。結論から端的にお伝えするスタイルです。",
     photo: "/provider2.jpg",
+    loginId: "ren",
+    loginPassword: "ren123",
   },
   {
     id: "p3",
@@ -55,6 +61,8 @@ export const initialProviders: Provider[] = [
     styleTags: ["スピリチュアル", "本格派", "リピーター多数"],
     bio: "霊視歴15年。目に見えないご縁や因縁、相手の本音を視ていきます。深い悩みほどお力になれます。",
     photo: "/provider3.jpg",
+    loginId: "mizuki",
+    loginPassword: "mizuki123",
   },
   {
     id: "p4",
@@ -69,6 +77,8 @@ export const initialProviders: Provider[] = [
     styleTags: ["24時間対応", "即レス", "低価格"],
     bio: "AIによるタロット・西洋占星術鑑定。膨大なデータから統計的傾向を踏まえて、いつでもすぐにお答えします。まずは気軽に試したい方に。",
     photo: "/provider-ai1.jpg",
+    loginId: "ai1",
+    loginPassword: "ai1123",
   },
   {
     id: "p5",
@@ -83,5 +93,7 @@ export const initialProviders: Provider[] = [
     styleTags: ["24時間対応", "即レス", "低価格"],
     bio: "AIによる四柱推命・数秘術鑑定。生年月日から導かれる運勢を、いつでもすぐに診断します。じっくり考える前にまず聞いてみたい方に。",
     photo: "/provider-ai2.jpg",
+    loginId: "ai2",
+    loginPassword: "ai2123",
   },
 ];

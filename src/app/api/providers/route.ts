@@ -38,8 +38,10 @@ export async function POST(req: NextRequest) {
       mailRate: Number(body.mailRate) || 3000,
       reviewCount: 0,
       styleTags: [],
-      bio: body.bio || "",
+      bio: "",
       photo: body.photo || "/provider1.jpg",
+      loginId: body.loginId || `provider${Date.now()}`,
+      loginPassword: body.loginPassword || "changeme",
     };
     const updated = [...providers, newProvider];
     await redis.set(KEY, updated);

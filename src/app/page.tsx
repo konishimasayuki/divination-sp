@@ -245,7 +245,8 @@ export default function Home() {
     chatRate: "",
     callRate: "",
     mailRate: "",
-    bio: "",
+    loginId: "",
+    loginPassword: "",
   });
 
   useEffect(() => {
@@ -273,6 +274,7 @@ export default function Home() {
         setRegistered(true);
         setAuthStep("app");
       } else if (session.authStep === "admin" || session.authStep === "provider") {
+        if (session.loggedInProviderId) setLoggedInProviderId(session.loggedInProviderId);
         setAuthStep(session.authStep);
       }
     } catch {
@@ -291,6 +293,7 @@ export default function Home() {
           gender,
           bloodType,
           email,
+          loggedInProviderId,
         })
       );
     } catch {
@@ -309,7 +312,15 @@ export default function Home() {
 
   function openNewProviderForm() {
     setEditingProviderId("new");
-    setProviderForm({ name: "", tag: "", chatRate: "", callRate: "", mailRate: "", bio: "" });
+    setProviderForm({
+      name: "",
+      tag: "",
+      chatRate: "",
+      callRate: "",
+      mailRate: "",
+      loginId: "",
+      loginPassword: "",
+    });
   }
 
   function openEditProviderForm(p: Provider) {
@@ -320,12 +331,17 @@ export default function Home() {
       chatRate: String(p.chatRate),
       callRate: String(p.callRate),
       mailRate: String(p.mailRate),
-      bio: p.bio,
+      loginId: p.loginId,
+      loginPassword: p.loginPassword,
     });
   }
 
   async function saveProviderForm() {
     if (!providerForm.name.trim() || !providerForm.tag.trim()) return;
+    if (!providerForm.loginId.trim() || !providerForm.loginPassword.trim()) {
+      setProviderSaveError("ログインIDとパスワードを入力してください");
+      return;
+    }
     setProviderSaveError("");
     try {
       if (editingProviderId === "new") {
@@ -349,7 +365,8 @@ export default function Home() {
               chatRate: Number(providerForm.chatRate) || undefined,
               callRate: Number(providerForm.callRate) || undefined,
               mailRate: Number(providerForm.mailRate) || undefined,
-              bio: providerForm.bio,
+              loginId: providerForm.loginId,
+              loginPassword: providerForm.loginPassword,
             },
           }),
         });
@@ -364,7 +381,29 @@ export default function Home() {
       );
     }
   }
-  const loggedInProviderId = "p1"; // デモ: 占い師ログイン時は紗希先生として扱う
+  const [loggedInProviderId, setLoggedInProviderId] = useState("p1");
+  const [bioDraft, setBioDraft] = useState("");
+  const [bioEditing, setBioEditing] = useState(false);
+  const [bioSaveError, setBioSaveError] = useState("");
+
+  async function saveBio(providerId: string) {
+    setBioSaveError("");
+    try {
+      const res = await fetch("/api/providers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: providerId, updates: { bio: bioDraft } }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "保存に失敗しました");
+      setProviderList(data.providers);
+      setBioEditing(false);
+    } catch (e) {
+      setBioSaveError(
+        e instanceof Error ? e.message : "保存に失敗しました。Upstashの接続を確認してください。"
+      );
+    }
+  }
 
   async function updateProviderStatus(id: string, status: Provider["status"]) {
     setProviderList((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
@@ -446,7 +485,17 @@ export default function Home() {
       saveSession("admin");
       return;
     }
+    const matchedProvider = providerList.find(
+      (p) => p.loginId === loginEmail && p.loginPassword === loginPassword
+    );
+    if (matchedProvider) {
+      setLoggedInProviderId(matchedProvider.id);
+      setAuthStep("provider");
+      saveSession("provider");
+      return;
+    }
     if (loginEmail === "b" && loginPassword === "b") {
+      setLoggedInProviderId("p1");
       setAuthStep("provider");
       saveSession("provider");
       return;
@@ -934,15 +983,30 @@ export default function Home() {
                   </label>
                 </div>
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">プロフィール文</span>
-                  <textarea
-                    value={providerForm.bio}
-                    onChange={(e) => setProviderForm((f) => ({ ...f, bio: e.target.value }))}
-                    rows={4}
-                    placeholder="鑑定歴や得意な相談内容などを入力"
+                  <span className="text-xs text-neutral-600">ログインID</span>
+                  <input
+                    value={providerForm.loginId}
+                    onChange={(e) =>
+                      setProviderForm((f) => ({ ...f, loginId: e.target.value }))
+                    }
+                    placeholder="例: sasaki"
                     className="rounded border border-neutral-200 px-2 py-2 text-sm"
                   />
                 </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-neutral-600">パスワード</span>
+                  <input
+                    value={providerForm.loginPassword}
+                    onChange={(e) =>
+                      setProviderForm((f) => ({ ...f, loginPassword: e.target.value }))
+                    }
+                    placeholder="占い師ログイン用パスワード"
+                    className="rounded border border-neutral-200 px-2 py-2 text-sm"
+                  />
+                </label>
+                <p className="text-[11px] text-neutral-400">
+                  ※ プロフィール文は占い師本人が占い師モードから設定します(ここでは編集しません)
+                </p>
                 <button
                   onClick={saveProviderForm}
                   className="rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white"
@@ -1157,6 +1221,53 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-medium text-neutral-600">プロフィール文</p>
+                {!bioEditing && (
+                  <button
+                    onClick={() => {
+                      setBioDraft(me.bio);
+                      setBioEditing(true);
+                    }}
+                    className="text-xs text-purple-700"
+                  >
+                    編集する
+                  </button>
+                )}
+              </div>
+              {!bioEditing ? (
+                <p className="text-xs leading-relaxed text-neutral-600">
+                  {me.bio || "まだプロフィール文が設定されていません"}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={bioDraft}
+                    onChange={(e) => setBioDraft(e.target.value)}
+                    rows={5}
+                    placeholder="鑑定歴や得意な相談内容などを入力してください"
+                    className="rounded border border-neutral-200 px-2 py-2 text-xs"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setBioEditing(false)}
+                      className="flex-1 rounded border border-neutral-200 py-1.5 text-xs"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      onClick={() => saveBio(me.id)}
+                      className="flex-1 rounded bg-purple-700 py-1.5 text-xs text-white"
+                    >
+                      保存する
+                    </button>
+                  </div>
+                  {bioSaveError && <p className="text-xs text-red-600">{bioSaveError}</p>}
+                </div>
+              )}
             </div>
 
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
