@@ -1984,7 +1984,7 @@ export default function Home() {
               <img
                 src="/home-icon.png"
                 alt="ホーム"
-                className="h-[103px] w-[103px] object-contain"
+                className="h-32 w-32 object-contain"
               />
             </button>
           </div>
