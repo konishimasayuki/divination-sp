@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import AgoraCallView from "@/components/AgoraCallView";
 import { type Provider, initialProviders } from "@/lib/providers-data";
 
 type Course = {
@@ -385,6 +386,7 @@ export default function Home() {
   const [bioDraft, setBioDraft] = useState("");
   const [bioEditing, setBioEditing] = useState(false);
   const [bioSaveError, setBioSaveError] = useState("");
+  const [providerInCall, setProviderInCall] = useState(false);
   const [videoTestLayout, setVideoTestLayout] = useState<
     "full-pinp" | "split" | "circle-overlay"
   >("full-pinp");
@@ -1336,7 +1338,32 @@ export default function Home() {
             </button>
           </div>
 
+          {providerInCall ? (
+            <div className="rounded-xl border border-neutral-200 bg-white p-3">
+              <p className="mb-2 text-xs font-medium text-neutral-600">
+                通話中(チャンネル: provider-{me.id})
+              </p>
+              <AgoraCallView
+                channel={`provider-${me.id}`}
+                uid={2}
+                localLabel={me.name}
+                remoteLabel="お客様"
+                onClose={() => setProviderInCall(false)}
+              />
+            </div>
+          ) : (
           <div className="flex flex-col gap-3">
+            <div className="rounded-xl border border-purple-200 bg-purple-50 p-3">
+              <p className="mb-2 text-xs text-purple-700">
+                お客様と同じチャンネル(provider-{me.id})に参加してテスト通話ができます
+              </p>
+              <button
+                onClick={() => setProviderInCall(true)}
+                className="w-full rounded-lg bg-purple-700 py-2 text-sm font-medium text-white"
+              >
+                通話に参加する(テスト)
+              </button>
+            </div>
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-neutral-100">
@@ -1442,6 +1469,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     );
@@ -1846,42 +1874,20 @@ export default function Home() {
 
             {step === "call" && provider && course && (
               <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3">
-                <div className="relative h-48 overflow-hidden rounded-lg bg-neutral-800">
-                  <img
-                    src={provider.photo}
-                    alt={provider.name}
-                    className="h-full w-full object-cover opacity-90"
-                  />
-                  <div className="absolute right-2 top-2 flex h-14 w-20 items-center justify-center rounded bg-neutral-700 text-center text-[10px] text-neutral-300">
-                    手元
-                    <br />
-                    (タロット)
-                  </div>
-                  {!cameraOn && (
-                    <div className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-1 text-[10px] text-white">
-                      自分のカメラ: OFF
-                    </div>
-                  )}
-                  {preCall && (
-                    <div className="absolute inset-x-2 top-2 rounded bg-black/60 px-2 py-1 text-center text-[10px] text-white">
-                      プレ通話中(無料・準備時間)
-                    </div>
-                  )}
-                  <div className="absolute inset-x-2 bottom-2 rounded bg-black/40 px-2 py-1">
-                    <p className="truncate text-[11px] text-white">
-                      {chat[chat.length - 1]}
-                    </p>
-                  </div>
-                </div>
+                <AgoraCallView
+                  channel={`provider-${provider.id}`}
+                  uid={1}
+                  localLabel="お客様"
+                  remoteLabel={provider.name}
+                />
+                {preCall && (
+                  <p className="rounded bg-amber-50 px-2 py-1 text-center text-[11px] text-amber-700">
+                    プレ通話中(無料・準備時間)
+                  </p>
+                )}
 
                 <div className="flex items-center justify-between text-xs text-neutral-500">
                   <span>{preCall ? "プレ通話" : `残り ${course.minutes}:00`}</span>
-                  <button
-                    onClick={() => setCameraOn((v) => !v)}
-                    className="rounded border border-neutral-200 px-2 py-1"
-                  >
-                    カメラ{cameraOn ? "OFF" : "ON"}にする
-                  </button>
                   <span>保有 {points}pt</span>
                 </div>
 
