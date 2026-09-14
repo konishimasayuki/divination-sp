@@ -1885,15 +1885,7 @@ export default function Home() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 flex justify-center border-t border-neutral-200 bg-white">
-        <div className="flex w-full max-w-sm">
-          <button
-            onClick={() => setTab("home")}
-            className={`flex-1 py-3 text-xs ${
-              tab === "home" ? "font-medium text-purple-700" : "text-neutral-400"
-            }`}
-          >
-            ホーム
-          </button>
+        <div className="relative flex w-full max-w-sm items-end">
           <button
             onClick={() => setTab("search")}
             className={`flex-1 py-3 text-xs ${
@@ -1910,6 +1902,18 @@ export default function Home() {
           >
             履歴
           </button>
+
+          <div className="flex flex-1 justify-center">
+            <button
+              onClick={() => setTab("home")}
+              className={`absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full text-2xl shadow-lg ring-4 ring-white ${
+                tab === "home" ? "bg-purple-700" : "bg-purple-500"
+              }`}
+            >
+              🔮
+            </button>
+          </div>
+
           <button
             onClick={() => setTab("messages")}
             className={`flex-1 py-3 text-xs ${
