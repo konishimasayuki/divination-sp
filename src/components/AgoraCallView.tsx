@@ -87,7 +87,15 @@ export default function AgoraCallView({ channel, uid, localLabel, remoteLabel, o
       cancelled = true;
       localTracksRef.current.audio?.close();
       localTracksRef.current.video?.close();
-      clientRef.current?.leave();
+      const client = clientRef.current;
+      if (client) {
+        client.remoteUsers.forEach((u) => {
+          u.audioTrack?.stop();
+          u.videoTrack?.stop();
+        });
+        client.removeAllListeners();
+        client.leave();
+      }
     };
   }, [channel, uid]);
 

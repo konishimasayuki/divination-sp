@@ -1961,6 +1961,13 @@ export default function Home() {
                   uid={1}
                   localLabel="お客様"
                   remoteLabel={provider.name}
+                  onClose={() => {
+                    setActiveChannel(null);
+                    setStep("providers");
+                    setProvider(null);
+                    setCourse(null);
+                    setTime(null);
+                  }}
                 />
                 {preCall && (
                   <p className="rounded bg-amber-50 px-2 py-1 text-center text-[11px] text-amber-700">
