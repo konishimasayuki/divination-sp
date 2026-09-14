@@ -2012,7 +2012,7 @@ export default function Home() {
               <img
                 src="/home-icon.png"
                 alt="ホーム"
-                className="h-32 w-32 max-w-none object-contain"
+                className="h-[102px] w-[102px] max-w-none object-contain"
               />
             </button>
           </div>
