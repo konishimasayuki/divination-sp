@@ -43,6 +43,7 @@ type Product = {
   category: string;
   points: number;
   desc: string;
+  thumb: string;
 };
 
 type ChatMsg = {
@@ -58,7 +59,7 @@ type CartLine = {
 type Tab = "home" | "shop" | "history" | "messages" | "mypage";
 type MainStep = "providers" | "detail" | "booking" | "checkout" | "call" | "chat";
 type MypageView = "top" | "edit" | "purchase" | "terms";
-type ShopView = "list" | "cart";
+type ShopView = "list" | "cart" | "detail";
 
 const initialProviders: Provider[] = [
   {
@@ -118,45 +119,51 @@ const pointPacks: PointPack[] = [
 const products: Product[] = [
   {
     id: "pr1",
-    name: "アメジスト浄化ブレスレット",
+    name: "アメジスト浄化ブレスレット(デモ)",
     category: "水晶",
     points: 3200,
     desc: "浄化・魔除けの意味を持つ紫水晶のブレスレット",
+    thumb: "from-purple-300 to-purple-100",
   },
   {
     id: "pr2",
-    name: "ローズクォーツブレスレット",
+    name: "ローズクォーツブレスレット(デモ)",
     category: "水晶",
     points: 2800,
     desc: "恋愛運アップの定番、淡いピンクの天然石",
+    thumb: "from-pink-300 to-pink-100",
   },
   {
     id: "pr3",
-    name: "水晶(クリアクォーツ)さざれ石",
+    name: "水晶(クリアクォーツ)さざれ石(デモ)",
     category: "水晶",
     points: 1500,
     desc: "浄化用のさざれ石。他の石の浄化にも使える",
+    thumb: "from-sky-200 to-neutral-100",
   },
   {
     id: "pr4",
-    name: "本連 数珠(女性用)",
+    name: "本連 数珠(女性用)(デモ)",
     category: "数珠",
     points: 4500,
     desc: "法事・お参り用の正式な本連数珠",
+    thumb: "from-neutral-400 to-neutral-200",
   },
   {
     id: "pr5",
-    name: "略式数珠(男女兼用)",
+    name: "略式数珠(男女兼用)(デモ)",
     category: "数珠",
     points: 2200,
     desc: "普段使いしやすいシンプルな略式数珠",
+    thumb: "from-amber-200 to-neutral-100",
   },
   {
     id: "pr6",
-    name: "先生監修タロットカード",
+    name: "先生監修タロットカード(デモ)",
     category: "タロット",
     points: 3800,
     desc: "紗希先生が実際に使用している78枚デッキと同モデル",
+    thumb: "from-indigo-300 to-amber-100",
   },
 ];
 
@@ -209,6 +216,7 @@ export default function Home() {
   const [mypageView, setMypageView] = useState<MypageView>("top");
   const [step, setStep] = useState<MainStep>("providers");
   const [shopView, setShopView] = useState<ShopView>("list");
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [shopMessage, setShopMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1408,43 +1416,94 @@ export default function Home() {
         {tab === "shop" && (
           <>
             {shopView === "list" && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">占いグッズ</p>
+                  <p className="text-sm font-bold text-neutral-900">占いグッズ</p>
                   <button
                     onClick={() => setShopView("cart")}
-                    className="rounded border border-neutral-200 px-3 py-1 text-xs"
+                    className="rounded-full border border-neutral-200 px-3 py-1 text-xs"
                   >
-                    カート({cart.reduce((s, l) => s + l.qty, 0)})
+                    🛒 カート({cart.reduce((s, l) => s + l.qty, 0)})
                   </button>
                 </div>
                 {["水晶", "数珠", "タロット"].map((category) => (
                   <div key={category} className="flex flex-col gap-2">
-                    <p className="text-xs font-medium text-neutral-500">{category}</p>
-                    {products
-                      .filter((p) => p.category === category)
-                      .map((p) => (
-                        <div
-                          key={p.id}
-                          className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-3"
-                        >
-                          <div className="pr-2">
-                            <p className="text-sm font-medium">{p.name}</p>
-                            <p className="text-xs text-neutral-500">{p.desc}</p>
-                            <p className="mt-1 text-xs font-medium text-neutral-700">
-                              {p.points.toLocaleString()}pt
-                            </p>
-                          </div>
+                    <p className="text-xs font-bold text-purple-700">{category}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {products
+                        .filter((p) => p.category === category)
+                        .map((p) => (
                           <button
-                            onClick={() => addToCart(p.id)}
-                            className="shrink-0 rounded bg-neutral-900 px-3 py-1.5 text-xs text-white"
+                            key={p.id}
+                            onClick={() => {
+                              setSelectedProductId(p.id);
+                              setShopView("detail");
+                            }}
+                            className="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left"
                           >
-                            追加
+                            <div
+                              className={`flex aspect-square items-center justify-center bg-gradient-to-br ${p.thumb} text-3xl`}
+                            >
+                              💎
+                            </div>
+                            <div className="p-2">
+                              <p className="line-clamp-2 text-xs font-medium text-neutral-900">
+                                {p.name}
+                              </p>
+                              <p className="mt-1 text-xs font-bold text-neutral-900">
+                                {p.points.toLocaleString()}pt
+                              </p>
+                            </div>
                           </button>
-                        </div>
-                      ))}
+                        ))}
+                    </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {shopView === "detail" && selectedProductId && (
+              <div className="flex flex-col gap-3 pb-16">
+                <button
+                  onClick={() => setShopView("list")}
+                  className="self-start text-xs text-neutral-500"
+                >
+                  ← 商品一覧に戻る
+                </button>
+                {(() => {
+                  const p = productMap[selectedProductId];
+                  return (
+                    <>
+                      <div
+                        className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${p.thumb} text-6xl`}
+                      >
+                        💎
+                      </div>
+                      <p className="text-xs font-medium text-purple-700">{p.category}</p>
+                      <p className="text-base font-bold text-neutral-900">{p.name}</p>
+                      <p className="text-lg font-bold text-neutral-900">
+                        {p.points.toLocaleString()}pt
+                      </p>
+                      <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+                        <p className="mb-1 text-xs font-bold text-neutral-700">商品説明</p>
+                        <p className="text-xs leading-relaxed text-neutral-600">{p.desc}</p>
+                      </div>
+                      <div className="fixed inset-x-0 bottom-14 flex justify-center">
+                        <div className="flex w-full max-w-sm gap-2 bg-white/95 p-3 backdrop-blur">
+                          <button
+                            onClick={() => {
+                              addToCart(p.id);
+                              setShopView("cart");
+                            }}
+                            className="flex-1 rounded-xl bg-purple-700 py-3 text-center text-xs font-bold text-white"
+                          >
+                            カートに入れる
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 
