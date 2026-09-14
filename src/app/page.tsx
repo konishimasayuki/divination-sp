@@ -8,7 +8,12 @@ type Provider = {
   tag: string;
   rating: number;
   status: "available" | "busy" | "off";
-  chatRate: number; // 1通あたりのポイント
+  chatRate: number; // 1文字あたりのポイント
+  callRate: number; // 1分あたりのポイント
+  mailRate: number; // 1回あたりのポイント
+  reviewCount: number;
+  styleTags: string[];
+  bio: string;
 };
 
 type Course = {
@@ -51,14 +56,50 @@ type CartLine = {
 };
 
 type Tab = "home" | "search" | "shop" | "history" | "messages" | "mypage";
-type MainStep = "providers" | "booking" | "checkout" | "call" | "chat";
+type MainStep = "providers" | "detail" | "booking" | "checkout" | "call" | "chat";
 type MypageView = "top" | "edit" | "purchase";
 type ShopView = "list" | "cart";
 
 const initialProviders: Provider[] = [
-  { id: "p1", name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, status: "available", chatRate: 50 },
-  { id: "p2", name: "蓮先生", tag: "四柱推命", rating: 4.8, status: "busy", chatRate: 60 },
-  { id: "p3", name: "美月先生", tag: "霊感・霊視", rating: 4.7, status: "off", chatRate: 80 },
+  {
+    id: "p1",
+    name: "紗希先生",
+    tag: "タロット・恋愛",
+    rating: 4.9,
+    status: "available",
+    chatRate: 50,
+    callRate: 120,
+    mailRate: 3000,
+    reviewCount: 8420,
+    styleTags: ["ゆったり", "初心者歓迎", "寄り添い"],
+    bio: "タロット鑑定歴8年。恋愛・復縁・片想いを中心に、あなたの気持ちに寄り添いながら丁寧にお伝えします。焦らずゆっくりお話ししましょう。",
+  },
+  {
+    id: "p2",
+    name: "蓮先生",
+    tag: "四柱推命",
+    rating: 4.8,
+    status: "busy",
+    chatRate: 60,
+    callRate: 150,
+    mailRate: 4000,
+    reviewCount: 5310,
+    styleTags: ["具体的", "テンポが良い", "的確"],
+    bio: "四柱推命歴12年。仕事運・金運の的中率に定評あり。結論から端的にお伝えするスタイルです。",
+  },
+  {
+    id: "p3",
+    name: "美月先生",
+    tag: "霊感・霊視",
+    rating: 4.7,
+    status: "off",
+    chatRate: 80,
+    callRate: 200,
+    mailRate: 5000,
+    reviewCount: 2190,
+    styleTags: ["スピリチュアル", "本格派", "リピーター多数"],
+    bio: "霊視歴15年。目に見えないご縁や因縁、相手の本音を視ていきます。深い悩みほどお力になれます。",
+  },
 ];
 
 const courses: Course[] = [
@@ -171,6 +212,8 @@ export default function Home() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [shopMessage, setShopMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [detailTab, setDetailTab] = useState<"profile" | "reviews">("profile");
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   // 予約フロー
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -265,6 +308,18 @@ export default function Home() {
       ]);
       setChatSending(false);
     }, 1200);
+  }
+
+  function viewDetail(p: Provider) {
+    setProvider(p);
+    setDetailTab("profile");
+    setStep("detail");
+  }
+
+  function toggleFavorite(id: string) {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
   }
 
   function selectProvider(p: Provider) {
@@ -848,7 +903,8 @@ export default function Home() {
                 {providerList.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
+                    onClick={() => viewDetail(p)}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
                       {p.name[0]}
@@ -856,17 +912,17 @@ export default function Home() {
                     <div className="flex-1">
                       <p className="text-sm font-medium">{p.name}</p>
                       <p className="text-xs text-neutral-500">
-                        {p.tag} ★{p.rating}
+                        {p.tag} ★{p.rating}({p.reviewCount.toLocaleString()}件)
                       </p>
                       <p className="text-xs text-neutral-400">
-                        チャット {p.chatRate}pt/通
+                        チャット {p.chatRate}pt/文字
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
                         {statusLabel[p.status]}
                       </span>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => selectProvider(p)}
                           disabled={p.status !== "available"}
@@ -885,6 +941,121 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {step === "detail" && provider && (
+              <div className="flex flex-col gap-3 pb-16">
+                <button
+                  onClick={() => setStep("providers")}
+                  className="self-start text-xs text-neutral-500"
+                >
+                  ← 一覧に戻る
+                </button>
+
+                <div className="relative h-40 overflow-hidden rounded-xl bg-gradient-to-br from-purple-700 to-purple-400">
+                  <div className="flex h-full items-center justify-center text-sm text-white/80">
+                    {provider.name} のイメージ画像
+                  </div>
+                  <button
+                    onClick={() => toggleFavorite(provider.id)}
+                    className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs"
+                  >
+                    {favorites.includes(provider.id) ? "❤️" : "🤍"} お気に入り
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 text-sm">
+                  <span>★ {provider.rating}</span>
+                  <span className="text-neutral-500">
+                    鑑定数 {provider.reviewCount.toLocaleString()}件
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  {provider.styleTags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-purple-50 px-3 py-1 text-xs text-purple-700"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex rounded-lg bg-neutral-100 p-1 text-xs">
+                  <button
+                    onClick={() => setDetailTab("profile")}
+                    className={`flex-1 rounded-md py-1.5 ${
+                      detailTab === "profile" ? "bg-white font-medium" : "text-neutral-500"
+                    }`}
+                  >
+                    プロフィール
+                  </button>
+                  <button
+                    onClick={() => setDetailTab("reviews")}
+                    className={`flex-1 rounded-md py-1.5 ${
+                      detailTab === "reviews" ? "bg-white font-medium" : "text-neutral-500"
+                    }`}
+                  >
+                    感謝の声
+                  </button>
+                </div>
+
+                {detailTab === "profile" && (
+                  <div className="flex flex-col gap-2 text-sm">
+                    <p className="font-medium">{provider.tag}鑑定歴 5年以上</p>
+                    <p className="leading-relaxed text-neutral-600">{provider.bio}</p>
+                  </div>
+                )}
+
+                {detailTab === "reviews" && (
+                  <div className="flex flex-col gap-3 text-xs">
+                    <div className="border-b border-neutral-100 pb-2">
+                      <p className="font-medium">30代 女性 ★★★★★</p>
+                      <p className="mt-1 text-neutral-600">
+                        いつも的確なアドバイスをありがとうございます。安心してお話しできました。
+                      </p>
+                    </div>
+                    <div className="border-b border-neutral-100 pb-2">
+                      <p className="font-medium">40代 女性 ★★★★☆</p>
+                      <p className="mt-1 text-neutral-600">
+                        テンポよく話を聞いてくださり、気持ちが軽くなりました。
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="fixed inset-x-0 bottom-14 flex justify-center">
+                  <div className="flex w-full max-w-sm">
+                    <button
+                      onClick={() => startChat(provider)}
+                      disabled={provider.status === "off"}
+                      className="flex-1 bg-purple-700 py-3 text-center text-xs text-white disabled:opacity-40"
+                    >
+                      チャット
+                      <br />
+                      {provider.chatRate}pt / 1文字
+                    </button>
+                    <button
+                      onClick={() => selectProvider(provider)}
+                      disabled={provider.status !== "available"}
+                      className="flex-1 bg-purple-600 py-3 text-center text-xs text-white disabled:opacity-40"
+                    >
+                      電話
+                      <br />
+                      {provider.callRate}pt / 1分
+                    </button>
+                    <button
+                      disabled
+                      className="flex-1 bg-purple-500 py-3 text-center text-xs text-white opacity-60"
+                    >
+                      メール
+                      <br />
+                      {provider.mailRate.toLocaleString()}pt / 1回
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
