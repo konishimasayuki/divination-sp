@@ -55,7 +55,7 @@ type CartLine = {
   qty: number;
 };
 
-type Tab = "home" | "search" | "shop" | "history" | "messages" | "mypage";
+type Tab = "home" | "shop" | "history" | "messages" | "mypage";
 type MainStep = "providers" | "detail" | "booking" | "checkout" | "call" | "chat";
 type MypageView = "top" | "edit" | "purchase" | "terms";
 type ShopView = "list" | "cart";
@@ -913,9 +913,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] flex justify-center pb-20 px-0 sm:px-4 sm:py-8">
-      <div className="w-full max-w-sm bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl overflow-hidden">
-        <div className="relative h-24 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+    <div className="h-[100dvh] overflow-hidden bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-8">
+      <div className="flex h-full w-full max-w-sm flex-col bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl overflow-hidden">
+        <div className="relative h-24 shrink-0 overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
           <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/10" />
           <button
             onClick={() => {
@@ -932,7 +932,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="px-5 py-5">
+        <div className="flex-1 overflow-y-auto px-5 py-5 pb-24">
 
         {tab === "home" && (
           <>
@@ -1364,190 +1364,6 @@ export default function Home() {
           </>
         )}
 
-        {tab === "search" && (
-          <div className="flex flex-col gap-3 pb-16">
-            <div className="flex overflow-hidden rounded-lg bg-neutral-100 text-xs">
-              <button
-                onClick={() => setSearchMode("category")}
-                className={`flex-1 py-2 ${
-                  searchMode === "category"
-                    ? "bg-purple-600 font-medium text-white"
-                    : "text-neutral-600"
-                }`}
-              >
-                カテゴリー
-              </button>
-              <button
-                onClick={() => setSearchMode("name")}
-                className={`flex-1 py-2 ${
-                  searchMode === "name"
-                    ? "bg-purple-600 font-medium text-white"
-                    : "text-neutral-600"
-                }`}
-              >
-                鑑定師名
-              </button>
-            </div>
-
-            {searchMode === "name" && (
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="占い師名でさがす"
-                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-              />
-            )}
-
-            {searchMode === "category" && !searchSubmitted && (
-              <>
-                <div>
-                  <p className="mb-2 text-sm font-medium">お悩みのジャンルからさがす</p>
-                  <div className="flex flex-wrap gap-2">
-                    {["あの人の気持ち", "復縁", "片想い", "相性", "結婚", "仕事", "金運"].map(
-                      (t) => (
-                        <button
-                          key={t}
-                          onClick={() => toggleTag(t)}
-                          className={`rounded-full px-3 py-1.5 text-xs ${
-                            selectedTags.includes(t)
-                              ? "bg-purple-600 text-white"
-                              : "bg-neutral-100 text-neutral-600"
-                          }`}
-                        >
-                          {t}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-medium">鑑定スタイルからさがす</p>
-                  <div className="flex flex-wrap gap-2">
-                    {["ゆったり", "寄り添い", "テンポが良い", "具体的", "初心者歓迎", "本格派"].map(
-                      (t) => (
-                        <button
-                          key={t}
-                          onClick={() => toggleTag(t)}
-                          className={`rounded-full px-3 py-1.5 text-xs ${
-                            selectedTags.includes(t)
-                              ? "bg-purple-600 text-white"
-                              : "bg-neutral-100 text-neutral-600"
-                          }`}
-                        >
-                          {t}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-medium">占術からさがす</p>
-                  <div className="flex flex-wrap gap-2">
-                    {["タロット", "四柱推命", "霊感・霊視", "西洋占星術", "手相"].map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => toggleTag(t)}
-                        className={`rounded-full px-3 py-1.5 text-xs ${
-                          selectedTags.includes(t)
-                            ? "bg-purple-600 text-white"
-                            : "bg-neutral-100 text-neutral-600"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="fixed inset-x-0 bottom-14 flex justify-center">
-                  <button
-                    onClick={() => setSearchSubmitted(true)}
-                    className="w-full max-w-sm bg-purple-700 py-3 text-sm font-medium text-white"
-                  >
-                    検索{selectedTags.length > 0 ? `(${selectedTags.length}件選択中)` : ""}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {(searchMode === "name" || searchSubmitted) && (
-              <>
-                {searchSubmitted && (
-                  <button
-                    onClick={() => setSearchSubmitted(false)}
-                    className="self-start text-xs text-neutral-500"
-                  >
-                    ← 条件を選び直す
-                  </button>
-                )}
-
-                <div className="flex gap-2 text-xs">
-                  {(["chat", "call", "mail"] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setConsultMethod(m)}
-                      className={`flex-1 rounded-full py-2 ${
-                        consultMethod === m
-                          ? "bg-purple-600 text-white"
-                          : "bg-neutral-100 text-neutral-600"
-                      }`}
-                    >
-                      {m === "chat" ? "チャット" : m === "call" ? "電話" : "メール"}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {providerList
-                    .filter((p) => {
-                      if (searchMode === "name") {
-                        return (
-                          p.name.includes(searchQuery) || p.tag.includes(searchQuery)
-                        );
-                      }
-                      if (selectedTags.length === 0) return true;
-                      return selectedTags.some(
-                        (t) =>
-                          p.tag.includes(t) ||
-                          p.styleTags.includes(t) ||
-                          p.name.includes(t)
-                      );
-                    })
-                    .map((p) => (
-                      <div
-                        key={p.id}
-                        onClick={() => viewDetail(p)}
-                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
-                          {p.name[0]}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{p.name}</p>
-                          <p className="text-xs text-neutral-500">
-                            ★{p.rating} 鑑定数 {p.reviewCount.toLocaleString()}件
-                          </p>
-                          <span
-                            className={`mt-1 inline-block rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}
-                          >
-                            {statusLabel[p.status]}
-                          </span>
-                        </div>
-                        <p className="text-xs font-medium text-purple-700">
-                          {consultMethod === "chat" && `1文字 ${p.chatRate}pt`}
-                          {consultMethod === "call" && `1分 ${p.callRate}pt`}
-                          {consultMethod === "mail" && `1回 ${p.mailRate.toLocaleString()}pt`}
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
         {tab === "history" && (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">予約・利用履歴</p>
@@ -1944,20 +1760,25 @@ export default function Home() {
       <nav className="fixed inset-x-0 bottom-0 flex justify-center border-t border-neutral-200 bg-white">
         <div className="relative flex w-full max-w-sm items-end">
           <button
-            onClick={() => setTab("search")}
-            className={`flex-1 py-3 text-xs ${
-              tab === "search" ? "font-medium text-purple-700" : "text-neutral-400"
+            onClick={() => setTab("messages")}
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+              tab === "messages" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            さがす
+            <span className="text-base">✉️</span>
+            メッセージ
           </button>
           <button
-            onClick={() => setTab("history")}
-            className={`flex-1 py-3 text-xs ${
-              tab === "history" ? "font-medium text-purple-700" : "text-neutral-400"
+            onClick={() => {
+              setTab("shop");
+              setShopView("list");
+            }}
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+              tab === "shop" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            履歴
+            <span className="text-base">🛍️</span>
+            グッズ
           </button>
 
           <div className="flex flex-1 justify-center">
@@ -1972,23 +1793,25 @@ export default function Home() {
           </div>
 
           <button
-            onClick={() => setTab("messages")}
-            className={`flex-1 py-3 text-xs ${
-              tab === "messages" ? "font-medium text-purple-700" : "text-neutral-400"
+            onClick={() => setTab("history")}
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+              tab === "history" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            メッセージ
+            <span className="text-base">🕘</span>
+            履歴
           </button>
           <button
             onClick={() => {
               setTab("mypage");
               setMypageView("top");
             }}
-            className={`flex-1 py-3 text-xs ${
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] ${
               tab === "mypage" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            マイメニュー
+            <span className="text-base">👤</span>
+            マイページ
           </button>
         </div>
       </nav>
