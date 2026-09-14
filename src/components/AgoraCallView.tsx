@@ -113,6 +113,53 @@ export default function AgoraCallView({ channel, uid, localLabel, remoteLabel, o
     setCamOn((v) => !v);
   }
 
+  const [pipSupported, setPipSupported] = useState(true);
+  const [pipActive, setPipActive] = useState(false);
+
+  useEffect(() => {
+    setPipSupported(
+      typeof document !== "undefined" &&
+        ("pictureInPictureEnabled" in document ||
+          // Safari(iOS/旧バージョン)向けの判定
+          (window as any).WebKitPresentationMode !== undefined)
+    );
+  }, []);
+
+  async function togglePiP() {
+    const container = remoteVideoRef.current;
+    const videoEl = container?.querySelector("video") as
+      | (HTMLVideoElement & {
+          webkitSetPresentationMode?: (mode: string) => void;
+          webkitSupportsPresentationMode?: (mode: string) => boolean;
+        })
+      | null;
+    if (!videoEl) return;
+
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setPipActive(false);
+        return;
+      }
+      if (videoEl.webkitSupportsPresentationMode && videoEl.webkitSetPresentationMode) {
+        // Safari(iOS)向け
+        videoEl.webkitSetPresentationMode(
+          videoEl.webkitSupportsPresentationMode("picture-in-picture")
+            ? "picture-in-picture"
+            : "inline"
+        );
+        setPipActive(true);
+        return;
+      }
+      if (videoEl.requestPictureInPicture) {
+        await videoEl.requestPictureInPicture();
+        setPipActive(true);
+      }
+    } catch {
+      // PinPに対応していない、またはユーザー操作が必要な場合はここに来る
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="relative h-64 overflow-hidden rounded-lg bg-neutral-900">
@@ -130,6 +177,14 @@ export default function AgoraCallView({ channel, uid, localLabel, remoteLabel, o
         <div className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-1 text-[10px] text-white">
           {localLabel}(自分)
         </div>
+        {remoteJoined && pipSupported && (
+          <button
+            onClick={togglePiP}
+            className="absolute bottom-2 right-2 rounded bg-black/50 px-2 py-1 text-[10px] text-white"
+          >
+            {pipActive ? "ワイプ解除" : "ワイプ表示"}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2">
