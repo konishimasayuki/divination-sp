@@ -1043,7 +1043,7 @@ export default function Home() {
         <div className="relative flex h-20 shrink-0 items-center justify-between overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 px-5">
           <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/10" />
           <div className="relative flex items-center gap-2">
-            <img src="/home-icon.png" alt="" className="h-11 w-11 object-contain" />
+            <img src="/home-icon.png" alt="" className="h-[88px] w-[88px] object-contain" />
             <h1 className="text-lg font-bold text-white">杉の泉</h1>
           </div>
           <button
@@ -1984,7 +1984,7 @@ export default function Home() {
               <img
                 src="/home-icon.png"
                 alt="ホーム"
-                className="h-[86px] w-[86px] object-contain"
+                className="h-[103px] w-[103px] object-contain"
               />
             </button>
           </div>
