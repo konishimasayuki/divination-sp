@@ -309,6 +309,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [gender, setGender] = useState("");
+  const [bloodType, setBloodType] = useState("");
   const [email, setEmail] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -950,67 +951,86 @@ export default function Home() {
   // ---------- 登録前 ----------
   if (authStep === "register") {
     return (
-      <div className="min-h-screen bg-neutral-50 flex justify-center py-10 px-4">
-        <div className="w-full max-w-sm">
-          <button
-            onClick={() => setAuthStep("login")}
-            className="mb-2 text-xs text-neutral-500"
-          >
-            ← ログインに戻る
-          </button>
-          <h1 className="mb-1 text-lg font-medium">はじめまして</h1>
-          <p className="mb-4 text-xs text-neutral-500">
-            占いに必要な情報を入力してください
-          </p>
-          <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">お名前</span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="占い 花子"
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">生年月日</span>
-              <input
-                type="date"
-                value={birthday}
-                onChange={(e) => setBirthday(e.target.value)}
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">性別</span>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              >
-                <option value="">選択してください</option>
-                <option value="female">女性</option>
-                <option value="male">男性</option>
-                <option value="other">その他・回答しない</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">メールアドレス</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="rounded border border-neutral-200 px-2 py-2 text-sm"
-              />
-            </label>
-            {formError && <p className="text-xs text-red-600">{formError}</p>}
+      <div className="min-h-screen bg-[#faf7f2] flex justify-center px-0 sm:px-4 sm:py-10">
+        <div className="w-full max-w-sm overflow-hidden bg-[#faf7f2] sm:rounded-3xl sm:shadow-xl">
+          <div className="relative flex h-40 flex-col justify-end overflow-hidden bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 p-5">
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
             <button
-              onClick={submitRegistration}
-              className="mt-1 rounded-lg bg-neutral-900 py-2 text-sm text-white"
+              onClick={() => setAuthStep("login")}
+              className="absolute left-4 top-4 text-xs text-white/80"
             >
-              登録して800pt獲得する
+              ← ログインに戻る
             </button>
+            <h1 className="text-2xl font-bold text-white">はじめまして</h1>
+            <p className="mt-1 text-xs text-white/80">占いに必要な情報を入力してください</p>
+          </div>
+
+          <div className="px-6 py-6">
+            <div className="flex flex-col gap-3 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">お名前</span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="占い 花子"
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">生年月日</span>
+                <input
+                  type="date"
+                  value={birthday}
+                  onChange={(e) => setBirthday(e.target.value)}
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">性別</span>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                >
+                  <option value="">選択してください</option>
+                  <option value="female">女性</option>
+                  <option value="male">男性</option>
+                  <option value="other">その他・回答しない</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">血液型</span>
+                <select
+                  value={bloodType}
+                  onChange={(e) => setBloodType(e.target.value)}
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                >
+                  <option value="">選択してください</option>
+                  <option value="A">A型</option>
+                  <option value="B">B型</option>
+                  <option value="O">O型</option>
+                  <option value="AB">AB型</option>
+                  <option value="unknown">わからない</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">メールアドレス</span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="rounded-lg border border-neutral-200 px-3 py-2.5 text-sm"
+                />
+              </label>
+              {formError && <p className="text-xs text-red-600">{formError}</p>}
+              <button
+                onClick={submitRegistration}
+                className="mt-1 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500 py-3 text-sm font-bold text-white shadow-sm"
+              >
+                登録して800pt獲得する
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1953,7 +1973,10 @@ export default function Home() {
 
           <div className="flex flex-1 justify-center">
             <button
-              onClick={() => setTab("home")}
+              onClick={() => {
+                setTab("home");
+                setStep("providers");
+              }}
               className={`absolute -top-6 flex h-16 w-16 items-center justify-center overflow-visible rounded-full bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500 shadow-lg ring-4 ring-white ${
                 tab === "home" ? "ring-purple-200" : ""
               }`}
