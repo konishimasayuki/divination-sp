@@ -257,7 +257,14 @@ export default function Home() {
       return;
     }
     if (loginEmail === "a" && loginPassword === "a") {
-      setAuthStep(registered ? "app" : "register");
+      if (!registered) {
+        setName("占い 花子");
+        setBirthday("1992-05-14");
+        setGender("female");
+        setEmail("hanako@example.com");
+        setRegistered(true);
+      }
+      setAuthStep("app");
       return;
     }
     setLoginError("ログイン情報が正しくありません");
