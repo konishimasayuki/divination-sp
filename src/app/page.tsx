@@ -106,6 +106,34 @@ const initialProviders: Provider[] = [
     bio: "霊視歴15年。目に見えないご縁や因縁、相手の本音を視ていきます。深い悩みほどお力になれます。",
     photo: "/provider3.jpg",
   },
+  {
+    id: "p4",
+    name: "アイ先生(AI・デモ)",
+    tag: "AIタロット占星術",
+    rating: 4.6,
+    status: "available",
+    chatRate: 30,
+    callRate: 80,
+    mailRate: 2000,
+    reviewCount: 640,
+    styleTags: ["24時間対応", "即レス", "低価格"],
+    bio: "AIによるタロット・西洋占星術鑑定。膨大なデータから統計的傾向を踏まえて、いつでもすぐにお答えします。まずは気軽に試したい方に。",
+    photo: "/provider-ai1.jpg",
+  },
+  {
+    id: "p5",
+    name: "レイ先生(AI・デモ)",
+    tag: "AI四柱推命・数秘術",
+    rating: 4.5,
+    status: "available",
+    chatRate: 30,
+    callRate: 80,
+    mailRate: 2000,
+    reviewCount: 410,
+    styleTags: ["24時間対応", "即レス", "低価格"],
+    bio: "AIによる四柱推命・数秘術鑑定。生年月日から導かれる運勢を、いつでもすぐに診断します。じっくり考える前にまず聞いてみたい方に。",
+    photo: "/provider-ai2.jpg",
+  },
 ];
 
 const courses: Course[] = [
@@ -1984,7 +2012,7 @@ export default function Home() {
               <img
                 src="/home-icon.png"
                 alt="ホーム"
-                className="h-40 w-40 object-contain"
+                className="h-32 w-32 max-w-none object-contain"
               />
             </button>
           </div>
