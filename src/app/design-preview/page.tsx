@@ -2,117 +2,46 @@
 
 import { useState } from "react";
 
-type ThemeKey = "elegant" | "neon" | "pastel" | "wamodern";
+type ThemeKey = "magazine" | "compact" | "hero" | "grid";
 
-const themes: Record<
-  ThemeKey,
-  {
-    label: string;
-    concept: string;
-    fontImport: string;
-    fontClass: string;
-    pageBg: string;
-    cardBg: string;
-    cardBorder: string;
-    primaryBtn: string;
-    accentText: string;
-    subText: string;
-    chipBg: string;
-    logoBg: string;
-    radius: string;
-    heading: string;
-  }
-> = {
-  elegant: {
-    label: "① エレガント紫×ゴールド",
-    concept: "上品・落ち着き。今の路線を洗練させた方向性。ゴールドの差し色で高級感を出す。",
-    fontImport:
-      "https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap",
-    fontClass: "font-[Noto_Sans_JP]",
-    pageBg: "bg-gradient-to-b from-[#f6f0fb] to-white",
-    cardBg: "bg-white",
-    cardBorder: "border border-[#e6dcf3]",
-    primaryBtn: "bg-[#5b3a8e] text-white",
-    accentText: "text-[#5b3a8e]",
-    subText: "text-[#a98fce]",
-    chipBg: "bg-[#f1e9fa] text-[#5b3a8e]",
-    logoBg: "bg-gradient-to-br from-[#5b3a8e] to-[#a98fce]",
-    radius: "rounded-2xl",
-    heading: "font-[Shippori_Mincho]",
+const labels: Record<ThemeKey, { label: string; concept: string }> = {
+  magazine: {
+    label: "① マガジン型",
+    concept:
+      "上部に大きな帯バナー、占い師は横スクロールの大判カードで見せる。写真映え・雑誌的なゆったりレイアウト。",
   },
-  neon: {
-    label: "② ダーク神秘×ネオン",
-    concept: "夜・宇宙・スピリチュアル感。占い感の強い没入型。若年層・SNS映え重視の方向性。",
-    fontImport:
-      "https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Sans+JP:wght@400;500&display=swap",
-    fontClass: "font-[Noto_Sans_JP]",
-    pageBg: "bg-[#0b0714]",
-    cardBg: "bg-[#150e26]",
-    cardBorder: "border border-[#3a2a5c]",
-    primaryBtn: "bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white",
-    accentText: "text-[#d8b4fe]",
-    subText: "text-[#8b7bab]",
-    chipBg: "bg-[#2a1f47] text-[#d8b4fe]",
-    logoBg: "bg-gradient-to-br from-[#a855f7] to-[#ec4899]",
-    radius: "rounded-xl",
-    heading: "font-[Cinzel]",
+  compact: {
+    label: "② コンパクトリスト型",
+    concept:
+      "情報密度を上げた縦一列リスト。小さめアイコン+右詰めの価格。素早く比較・選定したい人向け。",
   },
-  pastel: {
-    label: "③ パステルピンクのかわいい系",
-    concept: "親しみやすく明るい。初心者・若い女性層に刺さる、ゆるく可愛いトーン。",
-    fontImport:
-      "https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap",
-    fontClass: "font-[Zen_Maru_Gothic]",
-    pageBg: "bg-gradient-to-b from-[#fff0f6] to-[#fff9fb]",
-    cardBg: "bg-white",
-    cardBorder: "border-2 border-[#ffd6e8]",
-    primaryBtn: "bg-[#ff8fb3] text-white",
-    accentText: "text-[#ff6f9c]",
-    subText: "text-[#ffb3cc]",
-    chipBg: "bg-[#ffe4ef] text-[#ff6f9c]",
-    logoBg: "bg-gradient-to-br from-[#ff8fb3] to-[#ffc2d9]",
-    radius: "rounded-[28px]",
-    heading: "font-[Zen_Maru_Gothic]",
+  hero: {
+    label: "③ シンボル中心型",
+    concept:
+      "画面上半分を大きなロゴ/シンボルに使い、下に大きな1本のCTA。占い師一覧はカード枠なしのシンプルな行のみ。",
   },
-  wamodern: {
-    label: "④ ネイビー×ゴールドの和モダン",
-    concept: "大人向け・信頼感重視。老舗感・格式のある占い所のイメージ。",
-    fontImport:
-      "https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap",
-    fontClass: "font-[Noto_Sans_JP]",
-    pageBg: "bg-[#0f1a2e]",
-    cardBg: "bg-[#16233b]",
-    cardBorder: "border border-[#c9a86a]/30",
-    primaryBtn: "bg-[#c9a86a] text-[#0f1a2e]",
-    accentText: "text-[#c9a86a]",
-    subText: "text-[#6f7f9c]",
-    chipBg: "bg-[#c9a86a]/15 text-[#c9a86a]",
-    logoBg: "bg-gradient-to-br from-[#c9a86a] to-[#8a6f3a]",
-    radius: "rounded-lg",
-    heading: "font-[Noto_Serif_JP]",
+  grid: {
+    label: "④ タイル(2列グリッド)型",
+    concept:
+      "占い師を正方形タイルの2列グリッドで表示。アプリストアのような一覧性、上部に統計チップを横並び表示。",
   },
 };
 
 const dummyProviders = [
-  { name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, price: "50pt/文字" },
-  { name: "蓮先生", tag: "四柱推命", rating: 4.8, price: "60pt/文字" },
-  { name: "美月先生", tag: "霊感・霊視", rating: 4.7, price: "80pt/文字" },
+  { name: "紗希先生", tag: "タロット・恋愛", rating: 4.9, price: "50pt/文字", reviews: "8,420件" },
+  { name: "蓮先生", tag: "四柱推命", rating: 4.8, price: "60pt/文字", reviews: "5,310件" },
+  { name: "美月先生", tag: "霊感・霊視", rating: 4.7, price: "80pt/文字", reviews: "2,190件" },
 ];
 
 export default function DesignPreview() {
-  const [active, setActive] = useState<ThemeKey>("elegant");
-  const t = themes[active];
-  const isDark = active === "neon" || active === "wamodern";
+  const [active, setActive] = useState<ThemeKey>("magazine");
 
   return (
     <div className="min-h-screen bg-neutral-100 py-6">
-      <link rel="stylesheet" href={t.fontImport} />
-
-      {/* 切り替えセレクター */}
       <div className="mx-auto mb-6 flex w-full max-w-sm flex-col gap-2 px-4">
         <p className="text-xs font-medium text-neutral-500">デザイン案を選択(デモ切り替え)</p>
         <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(themes) as ThemeKey[]).map((key) => (
+          {(Object.keys(labels) as ThemeKey[]).map((key) => (
             <button
               key={key}
               onClick={() => setActive(key)}
@@ -122,89 +51,203 @@ export default function DesignPreview() {
                   : "border-neutral-300 bg-white text-neutral-600"
               }`}
             >
-              {themes[key].label}
+              {labels[key].label}
             </button>
           ))}
         </div>
         <p className="rounded-lg bg-white p-3 text-xs leading-relaxed text-neutral-500">
-          {t.concept}
+          {labels[active].concept}
         </p>
       </div>
 
-      {/* プレビュー本体 */}
-      <div
-        className={`mx-auto w-full max-w-sm overflow-hidden rounded-3xl shadow-xl ${t.pageBg} ${t.fontClass}`}
-      >
-        {/* ログイン画面プレビュー */}
-        <div className="flex flex-col items-center px-6 pb-8 pt-10">
-          <div
-            className={`mb-3 flex h-16 w-16 items-center justify-center rounded-2xl text-2xl ${t.logoBg}`}
-          >
-            🔮
-          </div>
-          <h1 className={`text-2xl font-bold tracking-wide ${t.accentText} ${t.heading}`}>
-            杉の泉
-          </h1>
-          <p className={`mt-1 text-xs ${t.subText}`}>運命を、あなたの味方に</p>
+      <div className="mx-auto w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-xl">
+        {active === "magazine" && <MagazineLayout />}
+        {active === "compact" && <CompactLayout />}
+        {active === "hero" && <HeroLayout />}
+        {active === "grid" && <GridLayout />}
+      </div>
+    </div>
+  );
+}
 
-          <div className={`mt-6 flex w-full flex-col gap-2 p-4 ${t.cardBg} ${t.cardBorder} ${t.radius}`}>
-            <div
-              className={`rounded border px-2 py-2 text-xs ${
-                isDark ? "border-white/10 text-white/40" : "border-neutral-200 text-neutral-400"
-              }`}
-            >
-              name@example.com
-            </div>
-            <div
-              className={`rounded border px-2 py-2 text-xs ${
-                isDark ? "border-white/10 text-white/40" : "border-neutral-200 text-neutral-400"
-              }`}
-            >
-              ••••••••
-            </div>
-            <button className={`mt-1 rounded-lg py-2.5 text-sm font-medium ${t.primaryBtn}`}>
-              ログイン
-            </button>
-          </div>
-          <p className={`mt-3 text-xs underline ${t.accentText}`}>はじめての方はこちら(会員登録)</p>
+// マガジン型
+function MagazineLayout() {
+  return (
+    <div className="bg-[#faf7f2]">
+      <div className="relative h-44 bg-gradient-to-br from-purple-800 via-purple-600 to-amber-500">
+        <div className="absolute inset-0 flex flex-col justify-end p-5">
+          <p className="text-[10px] tracking-widest text-white/70">SUGINOIZUMI ONLINE</p>
+          <h1 className="text-3xl font-bold text-white">杉の泉</h1>
+        </div>
+      </div>
+
+      <div className="px-5 py-5">
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="text-base font-bold text-neutral-900">今、話せる占い師</h2>
+          <span className="text-xs text-neutral-400">すべて見る →</span>
         </div>
 
-        <div className={`h-px w-full ${isDark ? "bg-white/10" : "bg-neutral-200"}`} />
-
-        {/* ホーム画面プレビュー */}
-        <div className="flex flex-col gap-3 px-4 py-6">
-          <div className="flex items-center justify-between">
-            <h2 className={`text-sm font-bold ${isDark ? "text-white" : "text-neutral-900"} ${t.heading}`}>
-              占い師一覧
-            </h2>
-            <span className={`text-xs ${t.subText}`}>保有 510pt</span>
-          </div>
-
+        <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2">
           {dummyProviders.map((p) => (
-            <div
-              key={p.name}
-              className={`flex items-center gap-3 p-3 ${t.cardBg} ${t.cardBorder} ${t.radius}`}
-            >
-              <div
-                className={`flex h-10 w-10 items-center justify-center text-sm font-medium ${t.radius} ${t.chipBg}`}
-              >
-                {p.name[0]}
+            <div key={p.name} className="w-40 shrink-0">
+              <div className="mb-2 flex h-40 w-40 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-200 to-amber-100 text-3xl">
+                🔮
               </div>
-              <div className="flex-1">
-                <p className={`text-sm font-medium ${isDark ? "text-white" : "text-neutral-900"}`}>
-                  {p.name}
-                </p>
-                <p className={`text-xs ${t.subText}`}>
-                  {p.tag} ★{p.rating}
-                </p>
-              </div>
-              <span className={`rounded-full px-2 py-1 text-xs ${t.chipBg}`}>{p.price}</span>
+              <p className="text-sm font-bold text-neutral-900">{p.name}</p>
+              <p className="text-[11px] text-neutral-500">{p.tag}</p>
+              <p className="mt-1 text-[11px] font-medium text-purple-700">
+                ★{p.rating} ・ {p.price}
+              </p>
             </div>
           ))}
+        </div>
 
-          <button className={`mt-1 rounded-lg py-2.5 text-sm font-medium ${t.primaryBtn}`}>
-            さっそく占ってみる
-          </button>
+        <div className="mt-6 rounded-2xl border border-purple-100 bg-white p-4">
+          <p className="text-xs text-neutral-500">今月のピックアップ特集</p>
+          <p className="mt-1 text-sm font-bold text-neutral-900">
+            「復縁」を叶えた先生ランキング
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// コンパクトリスト型
+function CompactLayout() {
+  return (
+    <div>
+      <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+        <h1 className="text-sm font-bold text-neutral-900">杉の泉</h1>
+        <span className="text-[11px] text-neutral-500">保有 510pt</span>
+      </div>
+
+      <div className="flex gap-2 border-b border-neutral-100 px-4 py-2 text-[11px]">
+        {["すべて", "タロット", "四柱推命", "霊視"].map((c, i) => (
+          <span
+            key={c}
+            className={`rounded px-2 py-1 ${
+              i === 0 ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+            }`}
+          >
+            {c}
+          </span>
+        ))}
+      </div>
+
+      <div>
+        {dummyProviders.map((p, i) => (
+          <div
+            key={p.name}
+            className={`flex items-center gap-2 px-4 py-2.5 ${
+              i !== 0 ? "border-t border-neutral-100" : ""
+            }`}
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-[10px] font-medium text-white">
+              {p.name[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1">
+                <p className="truncate text-xs font-bold text-neutral-900">{p.name}</p>
+                <span className="text-[10px] text-neutral-400">★{p.rating}</span>
+              </div>
+              <p className="truncate text-[10px] text-neutral-400">
+                {p.tag} ・ 鑑定{p.reviews}
+              </p>
+            </div>
+            <span className="shrink-0 text-[11px] font-bold text-neutral-900">{p.price}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-3">
+        <button className="w-full rounded bg-neutral-900 py-2 text-xs font-medium text-white">
+          もっと見る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// シンボル中心型
+function HeroLayout() {
+  return (
+    <div className="flex flex-col bg-gradient-to-b from-[#1a1030] to-[#0d0818] text-white">
+      <div className="flex flex-col items-center px-6 pb-6 pt-14">
+        <div className="mb-4 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-amber-200 text-5xl shadow-[0_0_60px_rgba(168,85,247,0.5)]">
+          🔮
+        </div>
+        <h1 className="text-3xl font-bold tracking-wide">杉の泉</h1>
+        <p className="mt-1 text-xs text-white/50">運命を、あなたの味方に</p>
+
+        <button className="mt-8 w-full rounded-full bg-white py-4 text-sm font-bold text-[#1a1030]">
+          今すぐ占ってもらう
+        </button>
+      </div>
+
+      <div className="rounded-t-[32px] bg-[#120c22] px-6 py-6">
+        <p className="mb-3 text-[11px] uppercase tracking-widest text-white/40">
+          Fortune Tellers
+        </p>
+        {dummyProviders.map((p, i) => (
+          <div
+            key={p.name}
+            className={`flex items-center justify-between py-3 ${
+              i !== 0 ? "border-t border-white/10" : ""
+            }`}
+          >
+            <div>
+              <p className="text-sm font-medium">{p.name}</p>
+              <p className="text-[11px] text-white/40">{p.tag}</p>
+            </div>
+            <p className="text-xs text-white/60">{p.price}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// タイル(2列グリッド)型
+function GridLayout() {
+  return (
+    <div>
+      <div className="bg-neutral-900 px-5 pb-5 pt-6 text-white">
+        <h1 className="text-lg font-bold">杉の泉</h1>
+        <div className="mt-3 flex gap-2">
+          <div className="flex-1 rounded-lg bg-white/10 px-3 py-2 text-center">
+            <p className="text-[10px] text-white/50">保有pt</p>
+            <p className="text-sm font-bold">510</p>
+          </div>
+          <div className="flex-1 rounded-lg bg-white/10 px-3 py-2 text-center">
+            <p className="text-[10px] text-white/50">在籍占い師</p>
+            <p className="text-sm font-bold">3</p>
+          </div>
+          <div className="flex-1 rounded-lg bg-white/10 px-3 py-2 text-center">
+            <p className="text-[10px] text-white/50">対応可能</p>
+            <p className="text-sm font-bold">1</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 p-4">
+        {dummyProviders.map((p) => (
+          <div key={p.name} className="overflow-hidden rounded-xl border border-neutral-200">
+            <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-neutral-200 to-neutral-300 text-3xl">
+              🔮
+            </div>
+            <div className="p-2">
+              <p className="truncate text-xs font-bold text-neutral-900">{p.name}</p>
+              <p className="truncate text-[10px] text-neutral-500">{p.tag}</p>
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-[10px] text-neutral-400">★{p.rating}</span>
+                <span className="text-[10px] font-bold text-neutral-900">{p.price}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div className="flex aspect-[1/1.3] flex-col items-center justify-center rounded-xl border border-dashed border-neutral-300 text-xs text-neutral-400">
+          もっと見る →
         </div>
       </div>
     </div>
