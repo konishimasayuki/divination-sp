@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "杉の泉 オンライン占いサービス",
   description: "杉の泉 オンライン占いサービス",
+  appleWebApp: {
+    title: "杉の泉",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
