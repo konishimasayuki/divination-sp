@@ -387,6 +387,26 @@ export default function Home() {
   const [bioEditing, setBioEditing] = useState(false);
   const [bioSaveError, setBioSaveError] = useState("");
   const [providerInCall, setProviderInCall] = useState(false);
+  const [activeChannel, setActiveChannel] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<
+    {
+      id: string;
+      providerId: string;
+      providerName: string;
+      courseLabel: string;
+      time: string;
+      channel: string;
+    }[]
+  >([]);
+  const [customerMessages, setCustomerMessages] = useState<
+    {
+      id: string;
+      providerId: string;
+      providerName: string;
+      text: string;
+      bookingId: string;
+    }[]
+  >([]);
   const [videoTestLayout, setVideoTestLayout] = useState<
     "full-pinp" | "split" | "circle-overlay"
   >("full-pinp");
@@ -648,9 +668,47 @@ export default function Home() {
       },
       ...prev,
     ]);
+
+    const bookingId = `bk${Date.now()}`;
+    const channel = `booking-${bookingId}`;
+    setBookings((prev) => [
+      ...prev,
+      {
+        id: bookingId,
+        providerId: provider.id,
+        providerName: provider.name,
+        courseLabel: course.label,
+        time: time ?? "",
+        channel,
+      },
+    ]);
+    setCustomerMessages((prev) => [
+      {
+        id: `m${Date.now()}`,
+        providerId: provider.id,
+        providerName: provider.name,
+        text: `${course.label}のご予約ありがとうございます。${time ?? "開始時刻"}になりましたら、下のボタンから入室してください。`,
+        bookingId,
+      },
+      ...prev,
+    ]);
+
+    setActiveChannel(channel);
     setStep("call");
     setPreCall(true);
     setTimeout(() => setPreCall(false), 3000);
+  }
+
+  function joinBooking(bookingId: string) {
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (!booking) return;
+    const p = providerList.find((pr) => pr.id === booking.providerId);
+    if (!p) return;
+    setProvider(p);
+    setCourse({ id: "resume", label: booking.courseLabel, minutes: 15, points: 0 });
+    setActiveChannel(booking.channel);
+    setStep("call");
+    setTab("home");
   }
 
   function sendMessage() {
@@ -1341,10 +1399,10 @@ export default function Home() {
           {providerInCall ? (
             <div className="rounded-xl border border-neutral-200 bg-white p-3">
               <p className="mb-2 text-xs font-medium text-neutral-600">
-                通話中(チャンネル: provider-{me.id})
+                通話中(チャンネル: {activeChannel || `provider-${me.id}`})
               </p>
               <AgoraCallView
-                channel={`provider-${me.id}`}
+                channel={activeChannel || `provider-${me.id}`}
                 uid={2}
                 localLabel={me.name}
                 remoteLabel="お客様"
@@ -1354,14 +1412,38 @@ export default function Home() {
           ) : (
           <div className="flex flex-col gap-3">
             <div className="rounded-xl border border-purple-200 bg-purple-50 p-3">
-              <p className="mb-2 text-xs text-purple-700">
-                お客様と同じチャンネル(provider-{me.id})に参加してテスト通話ができます
-              </p>
+              <p className="mb-2 text-xs font-bold text-purple-800">お客様からの予約(メッセージ)</p>
+              {bookings.filter((b) => b.providerId === me.id).length === 0 && (
+                <p className="text-xs text-purple-600">まだ予約はありません</p>
+              )}
+              <div className="flex flex-col gap-2">
+                {bookings
+                  .filter((b) => b.providerId === me.id)
+                  .map((b) => (
+                    <div key={b.id} className="rounded-lg bg-white p-2">
+                      <p className="text-xs text-neutral-700">
+                        {b.courseLabel} ・ {b.time || "時間指定なし"}
+                      </p>
+                      <button
+                        onClick={() => {
+                          setActiveChannel(b.channel);
+                          setProviderInCall(true);
+                        }}
+                        className="mt-1 w-full rounded bg-purple-700 py-1.5 text-xs text-white"
+                      >
+                        入室する
+                      </button>
+                    </div>
+                  ))}
+              </div>
               <button
-                onClick={() => setProviderInCall(true)}
-                className="w-full rounded-lg bg-purple-700 py-2 text-sm font-medium text-white"
+                onClick={() => {
+                  setActiveChannel(`provider-${me.id}`);
+                  setProviderInCall(true);
+                }}
+                className="mt-3 w-full rounded-lg border border-purple-300 py-2 text-xs text-purple-700"
               >
-                通話に参加する(テスト)
+                予約なしでテスト通話に入る
               </button>
             </div>
             <div className="rounded-xl border border-neutral-200 bg-white p-4">
@@ -1875,7 +1957,7 @@ export default function Home() {
             {step === "call" && provider && course && (
               <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3">
                 <AgoraCallView
-                  channel={`provider-${provider.id}`}
+                  channel={activeChannel || `provider-${provider.id}`}
                   uid={1}
                   localLabel="お客様"
                   remoteLabel={provider.name}
@@ -2033,11 +2115,25 @@ export default function Home() {
               <span className="text-neutral-400">お気に入り</span>
               <span className="text-neutral-400">タイムライン</span>
             </div>
-            <p className="mt-10 text-center text-xs text-neutral-400">
-              鑑定師からあなたへのメッセージが届くと
-              <br />
-              ここに表示されます
-            </p>
+            {customerMessages.length === 0 && (
+              <p className="mt-10 text-center text-xs text-neutral-400">
+                鑑定師からあなたへのメッセージが届くと
+                <br />
+                ここに表示されます
+              </p>
+            )}
+            {customerMessages.map((m) => (
+              <div key={m.id} className="rounded-xl border border-neutral-200 bg-white p-3">
+                <p className="text-xs font-bold text-neutral-900">{m.providerName}</p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-600">{m.text}</p>
+                <button
+                  onClick={() => joinBooking(m.bookingId)}
+                  className="mt-2 w-full rounded-lg bg-purple-700 py-2 text-xs font-medium text-white"
+                >
+                  入室する
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
