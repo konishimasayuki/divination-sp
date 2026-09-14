@@ -214,6 +214,10 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [detailTab, setDetailTab] = useState<"profile" | "reviews">("profile");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [searchMode, setSearchMode] = useState<"category" | "name">("category");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [consultMethod, setConsultMethod] = useState<"chat" | "call" | "mail">("chat");
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
 
   // 予約フロー
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -310,10 +314,17 @@ export default function Home() {
     }, 1200);
   }
 
+  function toggleTag(t: string) {
+    setSelectedTags((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+    );
+  }
+
   function viewDetail(p: Provider) {
     setProvider(p);
     setDetailTab("profile");
     setStep("detail");
+    setTab("home");
   }
 
   function toggleFavorite(id: string) {
@@ -1297,64 +1308,186 @@ export default function Home() {
         )}
 
         {tab === "search" && (
-          <div className="flex flex-col gap-2">
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="占い師名・得意分野でさがす"
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
-            />
-            {providerList
-              .filter(
-                (p) =>
-                  p.name.includes(searchQuery) || p.tag.includes(searchQuery)
-              )
-              .map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
-                    {p.name[0]}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-xs text-neutral-500">
-                      {p.tag} ★{p.rating}
-                    </p>
-                    <p className="text-xs text-neutral-400">
-                      チャット {p.chatRate}pt/通
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}>
-                      {statusLabel[p.status]}
-                    </span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => {
-                          selectProvider(p);
-                          setTab("home");
-                        }}
-                        disabled={p.status !== "available"}
-                        className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
-                      >
-                        通話
-                      </button>
-                      <button
-                        onClick={() => {
-                          startChat(p);
-                          setTab("home");
-                        }}
-                        disabled={p.status === "off"}
-                        className="rounded border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40"
-                      >
-                        チャット
-                      </button>
-                    </div>
+          <div className="flex flex-col gap-3 pb-16">
+            <div className="flex overflow-hidden rounded-lg bg-neutral-100 text-xs">
+              <button
+                onClick={() => setSearchMode("category")}
+                className={`flex-1 py-2 ${
+                  searchMode === "category"
+                    ? "bg-purple-600 font-medium text-white"
+                    : "text-neutral-600"
+                }`}
+              >
+                カテゴリー
+              </button>
+              <button
+                onClick={() => setSearchMode("name")}
+                className={`flex-1 py-2 ${
+                  searchMode === "name"
+                    ? "bg-purple-600 font-medium text-white"
+                    : "text-neutral-600"
+                }`}
+              >
+                鑑定師名
+              </button>
+            </div>
+
+            {searchMode === "name" && (
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="占い師名でさがす"
+                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm"
+              />
+            )}
+
+            {searchMode === "category" && !searchSubmitted && (
+              <>
+                <div>
+                  <p className="mb-2 text-sm font-medium">お悩みのジャンルからさがす</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["あの人の気持ち", "復縁", "片想い", "相性", "結婚", "仕事", "金運"].map(
+                      (t) => (
+                        <button
+                          key={t}
+                          onClick={() => toggleTag(t)}
+                          className={`rounded-full px-3 py-1.5 text-xs ${
+                            selectedTags.includes(t)
+                              ? "bg-purple-600 text-white"
+                              : "bg-neutral-100 text-neutral-600"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
-              ))}
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">鑑定スタイルからさがす</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["ゆったり", "寄り添い", "テンポが良い", "具体的", "初心者歓迎", "本格派"].map(
+                      (t) => (
+                        <button
+                          key={t}
+                          onClick={() => toggleTag(t)}
+                          className={`rounded-full px-3 py-1.5 text-xs ${
+                            selectedTags.includes(t)
+                              ? "bg-purple-600 text-white"
+                              : "bg-neutral-100 text-neutral-600"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">占術からさがす</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["タロット", "四柱推命", "霊感・霊視", "西洋占星術", "手相"].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => toggleTag(t)}
+                        className={`rounded-full px-3 py-1.5 text-xs ${
+                          selectedTags.includes(t)
+                            ? "bg-purple-600 text-white"
+                            : "bg-neutral-100 text-neutral-600"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="fixed inset-x-0 bottom-14 flex justify-center">
+                  <button
+                    onClick={() => setSearchSubmitted(true)}
+                    className="w-full max-w-sm bg-purple-700 py-3 text-sm font-medium text-white"
+                  >
+                    検索{selectedTags.length > 0 ? `(${selectedTags.length}件選択中)` : ""}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {(searchMode === "name" || searchSubmitted) && (
+              <>
+                {searchSubmitted && (
+                  <button
+                    onClick={() => setSearchSubmitted(false)}
+                    className="self-start text-xs text-neutral-500"
+                  >
+                    ← 条件を選び直す
+                  </button>
+                )}
+
+                <div className="flex gap-2 text-xs">
+                  {(["chat", "call", "mail"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setConsultMethod(m)}
+                      className={`flex-1 rounded-full py-2 ${
+                        consultMethod === m
+                          ? "bg-purple-600 text-white"
+                          : "bg-neutral-100 text-neutral-600"
+                      }`}
+                    >
+                      {m === "chat" ? "チャット" : m === "call" ? "電話" : "メール"}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {providerList
+                    .filter((p) => {
+                      if (searchMode === "name") {
+                        return (
+                          p.name.includes(searchQuery) || p.tag.includes(searchQuery)
+                        );
+                      }
+                      if (selectedTags.length === 0) return true;
+                      return selectedTags.some(
+                        (t) =>
+                          p.tag.includes(t) ||
+                          p.styleTags.includes(t) ||
+                          p.name.includes(t)
+                      );
+                    })
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => viewDetail(p)}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-700">
+                          {p.name[0]}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{p.name}</p>
+                          <p className="text-xs text-neutral-500">
+                            ★{p.rating} 鑑定数 {p.reviewCount.toLocaleString()}件
+                          </p>
+                          <span
+                            className={`mt-1 inline-block rounded px-2 py-0.5 text-xs ${statusStyle[p.status]}`}
+                          >
+                            {statusLabel[p.status]}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-purple-700">
+                          {consultMethod === "chat" && `1文字 ${p.chatRate}pt`}
+                          {consultMethod === "call" && `1分 ${p.callRate}pt`}
+                          {consultMethod === "mail" && `1回 ${p.mailRate.toLocaleString()}pt`}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
