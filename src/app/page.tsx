@@ -57,7 +57,7 @@ type CartLine = {
 
 type Tab = "home" | "search" | "shop" | "history" | "messages" | "mypage";
 type MainStep = "providers" | "detail" | "booking" | "checkout" | "call" | "chat";
-type MypageView = "top" | "edit" | "purchase";
+type MypageView = "top" | "edit" | "purchase" | "terms";
 type ShopView = "list" | "cart";
 
 const initialProviders: Provider[] = [
@@ -218,6 +218,7 @@ export default function Home() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [consultMethod, setConsultMethod] = useState<"chat" | "call" | "mail">("chat");
   const [searchSubmitted, setSearchSubmitted] = useState(false);
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy" | "tokushoho">("terms");
 
   // 予約フロー
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -1706,7 +1707,47 @@ export default function Home() {
                     <span>支払い方法の登録(準備中)</span>
                     <span>›</span>
                   </button>
+                  <div className="border-t border-neutral-100" />
+                  <button
+                    onClick={() => {
+                      setLegalDoc("terms");
+                      setMypageView("terms");
+                    }}
+                    className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
+                  >
+                    <span>利用規約</span>
+                    <span className="text-neutral-400">›</span>
+                  </button>
+                  <div className="border-t border-neutral-100" />
+                  <button
+                    onClick={() => {
+                      setLegalDoc("privacy");
+                      setMypageView("terms");
+                    }}
+                    className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
+                  >
+                    <span>プライバシーポリシー</span>
+                    <span className="text-neutral-400">›</span>
+                  </button>
+                  <div className="border-t border-neutral-100" />
+                  <button
+                    onClick={() => {
+                      setLegalDoc("tokushoho");
+                      setMypageView("terms");
+                    }}
+                    className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
+                  >
+                    <span>特定商取引法に基づく表記</span>
+                    <span className="text-neutral-400">›</span>
+                  </button>
                 </div>
+
+                <button
+                  onClick={() => setAuthStep("login")}
+                  className="rounded-lg border border-neutral-200 bg-white py-2 text-sm text-neutral-500"
+                >
+                  ログアウト
+                </button>
               </div>
             )}
 
@@ -1782,6 +1823,61 @@ export default function Home() {
                 >
                   保存する
                 </button>
+              </div>
+            )}
+
+            {mypageView === "terms" && (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => setMypageView("top")}
+                  className="self-start text-xs text-neutral-500"
+                >
+                  ← マイメニューに戻る
+                </button>
+
+                {legalDoc === "terms" && (
+                  <div className="rounded-xl border border-neutral-200 bg-white p-4 text-xs leading-relaxed text-neutral-700">
+                    <p className="mb-3 text-sm font-medium">利用規約</p>
+                    <p className="mb-2">
+                      本規約は、杉の泉オンライン占いサービス(以下「本サービス」)の利用条件を定めるものです。ユーザーは本規約に同意の上、本サービスをご利用ください。
+                    </p>
+                    <p className="mb-2">第1条(適用) 本規約は、本サービスの利用に関する運営者とユーザーとの間の一切の関係に適用されます。</p>
+                    <p className="mb-2">第2条(禁止事項) ユーザーは、法令又は公序良俗に違反する行為、犯罪行為に関連する行為、鑑定師への誹謗中傷、その他運営者が不適切と判断する行為を行ってはなりません。</p>
+                    <p className="mb-2">第3条(ポイント) 本サービス内で使用するポイントは、購入した時点から一定の有効期限を設けるものとし、詳細は別途定めます。ポイントの払い戻しは原則として行いません。</p>
+                    <p className="mb-2">第4条(免責事項) 本サービスで提供される占い・鑑定結果は、エンターテインメントとしての参考情報であり、その内容の正確性や結果について運営者は一切の責任を負いません。</p>
+                    <p className="mb-2">第5条(禁止する相談内容) 人の生死に関わること(妊娠・出産の有無を含む)、その他法令に抵触する相談については、鑑定をお断りする場合があります。</p>
+                    <p className="text-neutral-400">※ この文面は仮のサンプルです。実際の公開前に、内容の精査・弁護士等への確認をお願いします。</p>
+                  </div>
+                )}
+
+                {legalDoc === "privacy" && (
+                  <div className="rounded-xl border border-neutral-200 bg-white p-4 text-xs leading-relaxed text-neutral-700">
+                    <p className="mb-3 text-sm font-medium">プライバシーポリシー</p>
+                    <p className="mb-2">
+                      運営者は、ユーザーの個人情報(氏名、生年月日、メールアドレス等)を、本サービスの提供・ポイント管理・お問い合わせ対応の目的にのみ利用します。
+                    </p>
+                    <p className="mb-2">取得した情報は、法令に基づく場合を除き、ユーザーの同意なく第三者へ提供しません。</p>
+                    <p className="mb-2">決済に関する情報は、Stripe社等の決済代行事業者を通じて処理され、カード番号等の情報は運営者のサーバーには保存されません。</p>
+                    <p className="text-neutral-400">※ この文面は仮のサンプルです。実際の公開前に、内容の精査をお願いします。</p>
+                  </div>
+                )}
+
+                {legalDoc === "tokushoho" && (
+                  <div className="rounded-xl border border-neutral-200 bg-white p-4 text-xs leading-relaxed text-neutral-700">
+                    <p className="mb-3 text-sm font-medium">特定商取引法に基づく表記</p>
+                    <div className="flex flex-col gap-2">
+                      <p>販売事業者: (仮)運営会社名</p>
+                      <p>運営責任者: (仮)責任者名</p>
+                      <p>所在地: (仮)住所を記載</p>
+                      <p>連絡先: (仮)電話番号・メールアドレス</p>
+                      <p>販売価格: 各ポイントパック購入画面に表示の金額(税込)</p>
+                      <p>お支払い方法: クレジットカード決済(Stripe)</p>
+                      <p>サービス提供時期: 決済完了後、即時にポイントを付与</p>
+                      <p>返品・キャンセル: デジタルコンテンツの性質上、購入後の返金は原則不可</p>
+                    </div>
+                    <p className="mt-2 text-neutral-400">※ この文面は仮のサンプルです。実際の情報に差し替えてください。</p>
+                  </div>
+                )}
               </div>
             )}
           </>
