@@ -693,10 +693,11 @@ export default function Home() {
       ...prev,
     ]);
 
-    setActiveChannel(channel);
-    setStep("call");
-    setPreCall(true);
-    setTimeout(() => setPreCall(false), 3000);
+    setStep("providers");
+    setProvider(null);
+    setCourse(null);
+    setTime(null);
+    setTab("messages");
   }
 
   function joinBooking(bookingId: string) {
@@ -709,6 +710,8 @@ export default function Home() {
     setActiveChannel(booking.channel);
     setStep("call");
     setTab("home");
+    setPreCall(true);
+    setTimeout(() => setPreCall(false), 3000);
   }
 
   function sendMessage() {
