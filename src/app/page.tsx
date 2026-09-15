@@ -45,9 +45,9 @@ type CartLine = {
   qty: number;
 };
 
-type Tab = "home" | "shop" | "history" | "messages" | "mypage";
+type Tab = "home" | "shop" | "palm" | "messages" | "mypage";
 type MainStep = "providers" | "detail" | "booking" | "checkout" | "call" | "chat";
-type MypageView = "top" | "edit" | "purchase" | "terms";
+type MypageView = "top" | "edit" | "purchase" | "terms" | "history";
 type ShopView = "list" | "cart" | "detail";
 
 const courses: Course[] = [
@@ -387,6 +387,43 @@ export default function Home() {
   const [bioEditing, setBioEditing] = useState(false);
   const [bioSaveError, setBioSaveError] = useState("");
   const [providerInCall, setProviderInCall] = useState(false);
+  const [palmImage, setPalmImage] = useState<string | null>(null);
+  const [palmResult, setPalmResult] = useState("");
+  const [palmLoading, setPalmLoading] = useState(false);
+  const [palmError, setPalmError] = useState("");
+
+  function handlePalmImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPalmResult("");
+    setPalmError("");
+    const reader = new FileReader();
+    reader.onload = () => setPalmImage(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  async function runPalmReading() {
+    if (!palmImage) return;
+    setPalmLoading(true);
+    setPalmError("");
+    setPalmResult("");
+    try {
+      const res = await fetch("/api/palm-reading", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: palmImage }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "占いに失敗しました");
+      setPalmResult(data.result);
+    } catch (e) {
+      setPalmError(
+        e instanceof Error ? e.message : "占いに失敗しました。時間をおいて再度お試しください。"
+      );
+    } finally {
+      setPalmLoading(false);
+    }
+  }
   const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [bookings, setBookings] = useState<
     {
@@ -2088,33 +2125,54 @@ export default function Home() {
           </>
         )}
 
-        {tab === "history" && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium">予約・利用履歴</p>
-            {history.length === 0 && (
-              <p className="text-xs text-neutral-400">まだ履歴はありません</p>
-            )}
-            {history.map((h) => (
-              <div
-                key={h.id}
-                className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
-              >
-                <div>
-                  <p className="text-sm">{h.label}</p>
-                  <p className="text-xs text-neutral-500">
-                    {h.detail} ・ {h.date}
-                  </p>
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    h.points >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}
-                >
-                  {h.points >= 0 ? "+" : ""}
-                  {h.points}pt
-                </span>
+        {tab === "palm" && (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-bold text-neutral-900">AI手相占い</p>
+            <p className="text-xs text-neutral-500">
+              手のひらの写真を撮影すると、AIが手相を読み取って占います。
+            </p>
+
+            <label className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-purple-200 bg-white py-8 text-xs text-purple-600">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePalmImageSelect}
+                className="hidden"
+              />
+              📷 タップして手のひらを撮影
+            </label>
+
+            {palmImage && (
+              <div className="overflow-hidden rounded-2xl border border-neutral-200">
+                <img src={palmImage} alt="撮影した手のひら" className="w-full object-cover" />
               </div>
-            ))}
+            )}
+
+            {palmImage && (
+              <button
+                onClick={runPalmReading}
+                disabled={palmLoading}
+                className="rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {palmLoading ? "占い中..." : "この手相を占ってもらう(30pt)"}
+              </button>
+            )}
+
+            {palmError && <p className="text-xs text-red-600">{palmError}</p>}
+
+            {palmResult && (
+              <div className="rounded-2xl border border-purple-100 bg-white p-4">
+                <p className="mb-2 text-xs font-bold text-purple-700">AIによる手相鑑定結果</p>
+                <p className="whitespace-pre-wrap text-xs leading-relaxed text-neutral-700">
+                  {palmResult}
+                </p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-neutral-400">
+              ※ AIによる占いはエンターテインメントとしての参考情報です。撮影した画像は鑑定のみに利用され、保存はされません。
+            </p>
           </div>
         )}
 
@@ -2342,7 +2400,7 @@ export default function Home() {
 
                 <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-2">
                   <button
-                    onClick={() => setTab("history")}
+                    onClick={() => setMypageView("history")}
                     className="flex items-center justify-between rounded-lg px-2 py-3 text-left text-sm"
                   >
                     <span>予約・利用履歴</span>
@@ -2445,6 +2503,42 @@ export default function Home() {
                 <p className="text-xs text-neutral-400">
                   ※ 決済は現在ダミーです。Stripe接続後に実決済になります。
                 </p>
+              </div>
+            )}
+
+            {mypageView === "history" && (
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => setMypageView("top")}
+                  className="self-start text-xs text-neutral-500"
+                >
+                  ← マイページに戻る
+                </button>
+                <p className="text-sm font-medium">予約・利用履歴</p>
+                {history.length === 0 && (
+                  <p className="text-xs text-neutral-400">まだ履歴はありません</p>
+                )}
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3"
+                  >
+                    <div>
+                      <p className="text-sm">{h.label}</p>
+                      <p className="text-xs text-neutral-500">
+                        {h.detail} ・ {h.date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${
+                        h.points >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {h.points >= 0 ? "+" : ""}
+                      {h.points}pt
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -2593,13 +2687,13 @@ export default function Home() {
           </div>
 
           <button
-            onClick={() => setTab("history")}
+            onClick={() => setTab("palm")}
             className={`flex flex-1 flex-col items-center gap-0.5 pt-4 pb-1 text-[10px] ${
-              tab === "history" ? "font-medium text-purple-700" : "text-neutral-400"
+              tab === "palm" ? "font-medium text-purple-700" : "text-neutral-400"
             }`}
           >
-            <span className="text-base">🕘</span>
-            履歴
+            <span className="text-base">🤚</span>
+            AI手相
           </button>
           <button
             onClick={() => {
