@@ -402,8 +402,14 @@ export default function Home() {
     reader.readAsDataURL(file);
   }
 
+  const PALM_READING_COST = 200;
+
   async function runPalmReading() {
     if (!palmImage) return;
+    if (points < PALM_READING_COST) {
+      setPalmError("ポイントが不足しています。マイページから購入してください。");
+      return;
+    }
     setPalmLoading(true);
     setPalmError("");
     setPalmResult("");
@@ -416,6 +422,17 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "占いに失敗しました");
       setPalmResult(data.result);
+      setPoints((prev) => prev - PALM_READING_COST);
+      setHistory((prev) => [
+        {
+          id: `h${prev.length + 1}`,
+          label: "AI手相占い",
+          detail: "画像鑑定",
+          points: -PALM_READING_COST,
+          date: "本日",
+        },
+        ...prev,
+      ]);
     } catch (e) {
       setPalmError(
         e instanceof Error ? e.message : "占いに失敗しました。時間をおいて再度お試しください。"
@@ -2155,7 +2172,7 @@ export default function Home() {
                 disabled={palmLoading}
                 className="rounded-lg bg-purple-700 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
-                {palmLoading ? "占い中..." : "この手相を占ってもらう(30pt)"}
+                {palmLoading ? "占い中..." : `この手相を占ってもらう(${PALM_READING_COST}pt)`}
               </button>
             )}
 
