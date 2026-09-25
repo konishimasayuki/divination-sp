@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Shippori_Mincho_B1, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
+import { AppProvider } from "@/lib/store";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const mincho = Shippori_Mincho_B1({
+  variable: "--font-shippori",
+  weight: ["600", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const gothic = Zen_Kaku_Gothic_New({
+  variable: "--font-zen",
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -18,6 +23,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     title: "杉の泉",
     statusBarStyle: "black-translucent",
+    capable: true,
   },
   icons: {
     apple: "/apple-touch-icon.png",
@@ -29,15 +35,16 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#14102A",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ja" className={`${mincho.variable} ${gothic.variable} h-full antialiased`}>
+      <body className="min-h-full bg-night text-text">
+        <AppProvider>{children}</AppProvider>
+      </body>
     </html>
   );
 }
