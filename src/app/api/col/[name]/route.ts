@@ -5,7 +5,7 @@ import { assertRedis, redis } from "@/lib/redis";
 // GET    /api/col/bookings?providerId=p1  → 条件に一致する配列
 // POST   /api/col/bookings   body: item    → 追加したitem
 // PATCH  /api/col/bookings   body: {id, updates} → 更新後のitem
-const ALLOWED = ["users", "bookings", "messages", "history", "reviews", "payouts", "palm", "orders", "settings"];
+const ALLOWED = ["users", "bookings", "messages", "history", "reviews", "payouts", "palm", "orders", "settings", "products"];
 
 type Item = { id: string; [k: string]: unknown };
 
@@ -49,6 +49,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ name: stri
   try {
     const body = await req.json();
     const items = await load(name);
+    if (Array.isArray(body)) {
+      // 一括登録(デモデータの初期投入など)
+      const added = body.map((b: Record<string, unknown>) => ({ ...b, id: (b.id as string) || `${name.slice(0, 2)}${Date.now()}${Math.random().toString(36).slice(2, 6)}`, createdAt: (b.createdAt as number) || Date.now() })) as Item[];
+      const merged = [...items, ...added.filter((a) => !items.some((it) => it.id === a.id))];
+      await redis.set(`col:${name}`, merged);
+      return NextResponse.json({ items: merged });
+    }
     const item: Item = {
       ...body,
       id: body.id || `${name.slice(0, 2)}${Date.now()}${Math.random().toString(36).slice(2, 6)}`,

@@ -78,6 +78,19 @@ export async function update<T>(name: string, id: string, updates: Record<string
   }
 }
 
+export async function addMany<T>(name: string, items: Record<string, unknown>[]): Promise<T[]> {
+  try {
+    const res = await fetch(`/api/col/${name}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(items) });
+    if (!res.ok) throw new Error();
+    return (await res.json()).items as T[];
+  } catch {
+    const cur = localLoad(name);
+    const merged = [...cur, ...(items as Item[]).filter((a) => !cur.some((c) => c.id === a.id))];
+    localSave(name, merged);
+    return merged as unknown as T[];
+  }
+}
+
 export const threadIdOf = (userId: string, providerId: string) => `${userId}__${providerId}`;
 
 export function fmtPt(n: number) {

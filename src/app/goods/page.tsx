@@ -3,20 +3,21 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useApp, useGuard } from "@/lib/store";
-import { PRODUCT_CATEGORIES, products, productMap } from "@/lib/products";
+import { PRODUCT_CATEGORIES } from "@/lib/products";
 import { fmtPt } from "@/lib/db";
 import { ICart } from "@/components/icons";
 import { Chip, Loading, Screen } from "@/components/ui";
 
 export default function Goods() {
   const ok = useGuard("user");
-  const { cart, providers } = useApp();
+  const { cart, providers, products } = useApp();
   const [cat, setCat] = useState("すべて");
   if (!ok) return <Screen nav="goods"><Loading /></Screen>;
   const count = cart.reduce((s, c) => s + c.qty, 0);
-  const rows = products.filter((p) => cat === "すべて" || p.category === cat);
-  const pick = productMap.pr1;
-  const sup = providers.find((p) => p.id === pick.supervisor);
+  const live = products.filter((p) => p.published !== false && !p.deleted);
+  const rows = live.filter((p) => cat === "すべて" || p.category === cat);
+  const pick = live.find((p) => p.id === "pr1") ?? live[0];
+  const sup = providers.find((p) => p.id === pick?.providerId);
 
   return (
     <Screen nav="goods">
@@ -28,14 +29,14 @@ export default function Goods() {
         </Link>
       </div>
 
-      <Link href={`/goods/${pick.id}`} className="mx-4 flex h-24 items-center gap-3.5 overflow-hidden rounded-[18px] border border-line bg-card pr-3.5 text-text">
+      {pick && <Link href={`/goods/${pick.id}`} className="mx-4 flex h-24 items-center gap-3.5 overflow-hidden rounded-[18px] border border-line bg-card pr-3.5 text-text">
         <img src={pick.image} alt="" className="h-24 w-[110px] object-cover" />
         <div className="min-w-0">
           <div className="text-[11px] font-bold text-gold">先生が選んだ今月の石</div>
           <div className="mt-1 truncate font-mincho text-base font-bold">心を整える、紫水晶</div>
           <div className="mt-1 text-xs text-mute">{sup ? `${sup.name} 監修` : ""}</div>
         </div>
-      </Link>
+      </Link>}
 
       <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto px-4">
         {PRODUCT_CATEGORIES.map((c) => (
@@ -44,9 +45,13 @@ export default function Goods() {
       </div>
 
       <div className="mx-4 mt-4 grid grid-cols-2 gap-3 pb-6">
+        {rows.length === 0 && <p className="col-span-2 py-10 text-center text-sm text-mute">このカテゴリの商品はまだありません</p>}
         {rows.map((p) => (
           <Link key={p.id} href={`/goods/${p.id}`} className="text-text">
-            <img src={p.image} alt={p.name} className="block h-[150px] w-full rounded-2xl object-cover" />
+            <div className="relative">
+              <img src={p.image} alt={p.name} className="block h-[150px] w-full rounded-2xl object-cover" />
+              {p.stock === 0 && <span className="absolute left-2 top-2 rounded-full bg-night px-2.5 py-1 text-[11px] font-bold text-rose">売り切れ</span>}
+            </div>
             <div className="mt-2 line-clamp-2 text-[13px] font-medium leading-snug">{p.name}</div>
             <div className="mt-1 text-sm font-bold text-gold">{fmtPt(p.points)}</div>
           </Link>

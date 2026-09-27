@@ -3,28 +3,11 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProviderMe } from "@/lib/useProviderMe";
+import { uploadImage } from "@/lib/upload";
 import { IPen } from "@/components/icons";
 import { BackHeader, Loading, Screen, btnGold } from "@/components/ui";
 
 const STYLES = ["ゆったり", "寄り添い", "初心者歓迎", "具体的", "テンポが良い", "辛口", "本格派", "ユーモア"];
-
-async function toThumb(file: File): Promise<string> {
-  const url = URL.createObjectURL(file);
-  const img = await new Promise<HTMLImageElement>((res, rej) => {
-    const i = new Image();
-    i.onload = () => res(i);
-    i.onerror = rej;
-    i.src = url;
-  });
-  const size = 600;
-  const s = Math.min(img.width, img.height);
-  const c = document.createElement("canvas");
-  c.width = size;
-  c.height = size;
-  c.getContext("2d")!.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
-  URL.revokeObjectURL(url);
-  return c.toDataURL("image/jpeg", 0.82);
-}
 
 export default function ProviderProfile() {
   const { ok, me, app } = useProviderMe();
@@ -56,7 +39,7 @@ export default function ProviderProfile() {
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
         const f = e.target.files?.[0];
         e.target.value = "";
-        if (f) setPhoto(await toThumb(f));
+        if (f) setPhoto(await uploadImage(f, { max: 600, square: true }));
       }} />
       <div className="mx-4 flex items-center gap-3.5">
         <button onClick={() => fileRef.current?.click()} className="relative" aria-label="写真を変更">

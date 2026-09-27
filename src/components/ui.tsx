@@ -54,7 +54,7 @@ export function BottomNav({ active }: { active: NavKey }) {
   );
   return (
     <nav
-      className="grid shrink-0 grid-cols-5 items-start border-t border-[#2E2754] bg-[#1A1533] pt-2.5"
+      className="relative z-40 grid shrink-0 grid-cols-5 items-start border-t border-[#2E2754] bg-[#1A1533] pt-2.5"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}
     >
       {item("messages", "/messages", "メッセージ", <IMsg strokeWidth={active === "messages" ? 1.9 : 1.6} />)}

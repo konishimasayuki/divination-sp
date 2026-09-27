@@ -5,12 +5,17 @@ export type Product = {
   points: number;
   desc: string;
   image: string;
-  supervisor?: string; // 監修の先生ID
+  supervisor?: string; // (旧)監修の先生ID
+  providerId?: string; // 登録した先生のID(空なら運営の商品)
+  stock?: number | null; // 在庫数(null・未設定は制限なし)
+  published?: boolean; // お客様に公開するか
+  deleted?: boolean;
+  createdAt?: number;
 };
 
 export const PRODUCT_CATEGORIES = ["すべて", "水晶", "お守り", "開運グッズ", "数珠", "色紙", "タロット"];
 
-export const products: Product[] = [
+const DEMO_BASE: Product[] = [
   { id: "pr1", name: "アメジスト浄化ブレスレット(デモ)", category: "水晶", points: 3200, desc: "浄化・魔除けの意味を持つ紫水晶のブレスレット。気持ちを落ち着けたい夜や、大切な決断の前に。", image: "/product-amethyst.jpg", supervisor: "p1" },
   { id: "pr2", name: "ローズクォーツブレスレット(デモ)", category: "水晶", points: 2800, desc: "恋愛運アップの定番、淡いピンクの天然石。", image: "/product-rosequartz.jpg", supervisor: "p1" },
   { id: "pr3", name: "水晶さざれ石(デモ)", category: "水晶", points: 1500, desc: "浄化用のさざれ石。ほかの石の浄化にも使えます。", image: "/product-rosequartz.jpg" },
@@ -29,4 +34,13 @@ export const products: Product[] = [
   { id: "pr7", name: "オラクルカード(デモ)", category: "タロット", points: 3500, desc: "直感を高めるメッセージ性の強いオラクルカードデッキ。", image: "/product-tarot.jpg" },
 ];
 
-export const productMap: Record<string, Product> = Object.fromEntries(products.map((p) => [p.id, p]));
+// デモ商品(データベースが空のとき最初に登録される)
+export const DEMO_PRODUCTS: Product[] = DEMO_BASE.map((p, i) => ({
+  ...p,
+  providerId: p.supervisor ?? "",
+  stock: null,
+  published: true,
+  createdAt: 1700000000000 + i,
+}));
+
+export const CATEGORY_OPTIONS = PRODUCT_CATEGORIES.filter((c) => c !== "すべて");

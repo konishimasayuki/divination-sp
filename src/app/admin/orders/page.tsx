@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { fmtPt, list } from "@/lib/db";
-import { productMap } from "@/lib/products";
+import { useApp } from "@/lib/store";
 import type { Order, User } from "@/lib/types";
 import { AdminShell, panel } from "@/components/AdminShell";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<(Order & { address?: string })[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const { products, providers } = useApp();
+  const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
   useEffect(() => {
     list<Order & { address?: string }>("orders").then((o) => setOrders(o.sort((a, b) => b.createdAt - a.createdAt)));
@@ -32,7 +34,7 @@ export default function AdminOrders() {
                 <td className="py-3 font-bold">{users.find((u) => u.id === o.userId)?.name ?? "-"}</td>
                 <td className="py-3 text-lav">
                   {o.items.map((it) => (
-                    <div key={it.productId}>{productMap[it.productId]?.name ?? it.productId} × {it.qty}</div>
+                    <div key={it.productId}>{productMap[it.productId]?.name ?? it.productId} × {it.qty}<span className="ml-2 text-[11px] text-dim">{providers.find((p) => p.id === productMap[it.productId]?.providerId)?.name ?? "運営"}</span></div>
                   ))}
                 </td>
                 <td className="max-w-[220px] whitespace-pre-wrap py-3 text-xs text-lav">{o.address ?? "-"}</td>

@@ -4,19 +4,21 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp, useGuard } from "@/lib/store";
-import { productMap } from "@/lib/products";
+import { list } from "@/lib/db";
+import type { Product } from "@/lib/products";
 import { add, fmtPt } from "@/lib/db";
 import { BackHeader, Loading, Screen } from "@/components/ui";
 
 export default function Cart() {
   const ok = useGuard("user");
   const router = useRouter();
-  const { user, cart, setCartQty, clearCart, spend, saveUser } = useApp();
+  const { user, cart, setCartQty, clearCart, spend, saveUser, products, saveProduct, refreshProducts } = useApp();
   const [address, setAddress] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!ok || !user) return <Screen><Loading /></Screen>;
 
+  const productMap: Record<string, Product> = Object.fromEntries(products.filter((p) => !p.deleted && p.published !== false).map((p) => [p.id, p]));
   const lines = cart.filter((c) => productMap[c.productId]);
   const total = lines.reduce((s, c) => s + productMap[c.productId].points * c.qty, 0);
   const addr = address ?? user.address ?? "";
@@ -29,6 +31,18 @@ export default function Cart() {
     }
     setBusy(true);
     setError("");
+    // 最新の在庫を確認
+    const latest = await list<Product>("products");
+    const short = lines.find((c) => {
+      const lp = latest.find((x) => x.id === c.productId);
+      return lp && lp.stock != null && lp.stock < c.qty;
+    });
+    if (short) {
+      await refreshProducts();
+      setBusy(false);
+      setError(`「${productMap[short.productId].name}」の在庫が足りません`);
+      return;
+    }
     const label = lines.length === 1 ? productMap[lines[0].productId].name : `${productMap[lines[0].productId].name} ほか${lines.length - 1}点`;
     const paid = await spend(total, { kind: "goods", label, detail: "グッズ注文" });
     if (!paid) {
@@ -36,7 +50,11 @@ export default function Cart() {
       setError("ポイントが不足しています");
       return;
     }
-    await add("orders", { userId: user.id, items: lines, total, address: addr.trim() });
+    await add("orders", { userId: user.id, items: lines, total, address: addr.trim(), providerIds: Array.from(new Set(lines.map((c) => productMap[c.productId].providerId || ""))) });
+    for (const c of lines) {
+      const lp = latest.find((x) => x.id === c.productId);
+      if (lp && lp.stock != null) await saveProduct(c.productId, { stock: Math.max(0, lp.stock - c.qty) });
+    }
     if (addr !== user.address) await saveUser({ address: addr.trim() });
     clearCart();
     router.replace("/history");

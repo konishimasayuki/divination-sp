@@ -127,6 +127,10 @@ export default function ProviderHome() {
           <span className="flex-1">受付時間の設定</span>
           <span className="text-faint">›</span>
         </Link>
+        <Link href="/provider/goods" className="flex h-[50px] items-center border-b border-deep px-4 text-sm text-text">
+          <span className="flex-1">開運グッズの登録・注文</span>
+          <span className="text-faint">›</span>
+        </Link>
         <Link href="/provider/profile" className="flex h-[50px] items-center px-4 text-sm text-text">
           <span className="flex-1">プロフィール文・写真の編集</span>
           <span className="text-faint">›</span>

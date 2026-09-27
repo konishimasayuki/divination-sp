@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { useRouter } from "next/navigation";
 import { initialProviders, normalizeProvider, type Provider } from "./providers-data";
 import { defaultSettings, type HistoryItem, type Settings, type User } from "./types";
-import { add, list, update } from "./db";
+import { add, addMany, list, update } from "./db";
+import { DEMO_PRODUCTS, type Product } from "./products";
 
 type Session = { role: "user" | "provider" | "admin"; userId?: string; providerId?: string };
 type CartLine = { productId: string; qty: number };
@@ -16,6 +17,10 @@ type Ctx = {
   providers: Provider[];
   settings: Settings;
   cart: CartLine[];
+  products: Product[];
+  refreshProducts: () => Promise<void>;
+  saveProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  addProduct: (data: Partial<Product>) => Promise<Product>;
   login: (id: string, pw: string) => Promise<string | null>;
   register: (data: Omit<User, "id" | "points" | "favorites" | "status" | "createdAt">) => Promise<string | null>;
   logout: () => void;
@@ -45,6 +50,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [products, setProducts] = useState<Product[]>(DEMO_PRODUCTS);
+
+  const refreshProducts = useCallback(async () => {
+    let items = await list<Product>("products");
+    if (items.length === 0) items = await addMany<Product>("products", DEMO_PRODUCTS as unknown as Record<string, unknown>[]);
+    setProducts(items.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)));
+  }, []);
 
   const refreshProviders = useCallback(async () => {
     try {
@@ -77,6 +89,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // 占い師・設定は裏で読み込む(画面表示を待たせない)
         refreshProviders();
         refreshSettings();
+        refreshProducts();
         if (s?.role === "user" && s.userId) {
           const u = await loadUser(s.userId);
           if (u) setSession(s);
@@ -90,7 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setReady(true);
       }
     })();
-  }, [refreshProviders, refreshSettings, loadUser]);
+  }, [refreshProviders, refreshSettings, refreshProducts, loadUser]);
 
   function persistSession(s: Session | null) {
     setSession(s);
@@ -227,6 +240,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const saveProduct = async (id: string, updates: Partial<Product>) => {
+    const p = await update<Product>("products", id, updates as Record<string, unknown>);
+    setProducts((prev) => prev.map((x) => (x.id === id ? { ...x, ...p } : x)));
+  };
+  const addProduct = async (data: Partial<Product>) => {
+    const p = await add<Product>("products", data as Record<string, unknown>);
+    setProducts((prev) => [...prev, p]);
+    return p;
+  };
+
   const saveSettings = async (updates: Partial<Settings>) => {
     const next = { ...settings, ...updates };
     await update("settings", "main", next);
@@ -259,6 +282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppCtx.Provider
       value={{
         ready, session, user, providers, settings, cart,
+        products, refreshProducts, saveProduct, addProduct,
         login, register, logout, refreshUser, saveUser, spend, gain,
         refreshProviders, saveProvider, addProvider, refreshSettings, saveSettings,
         addToCart, setCartQty, clearCart, toggleFavorite,

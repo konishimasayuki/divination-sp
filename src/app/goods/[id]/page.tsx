@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useApp, useGuard } from "@/lib/store";
-import { productMap } from "@/lib/products";
 import { fmtPt } from "@/lib/db";
 import { IBack, ICart } from "@/components/icons";
 import { Loading, Screen } from "@/components/ui";
@@ -13,12 +12,14 @@ export default function GoodsDetail() {
   const ok = useGuard("user");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { providers, addToCart, cart } = useApp();
+  const { providers, addToCart, cart, products } = useApp();
   const [qty, setQty] = useState(1);
-  const p = productMap[id];
+  const p = products.find((x) => x.id === id && !x.deleted);
   if (!ok) return <Screen><Loading /></Screen>;
   if (!p) return <Screen><Loading label="商品が見つかりません" /></Screen>;
-  const sup = providers.find((x) => x.id === p.supervisor);
+  const sup = providers.find((x) => x.id === p.providerId);
+  const soldOut = p.stock === 0;
+  const maxQty = p.stock == null ? 9 : Math.max(1, Math.min(9, p.stock));
   const count = cart.reduce((s, c) => s + c.qty, 0);
 
   return (
@@ -28,16 +29,17 @@ export default function GoodsDetail() {
           <div className="flex h-[52px] items-center rounded-[14px] border border-edge">
             <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="数量を減らす" className="h-[50px] w-11 text-xl">−</button>
             <span className="w-6 text-center font-bold">{qty}</span>
-            <button onClick={() => setQty(Math.min(9, qty + 1))} aria-label="数量を増やす" className="h-[50px] w-11 text-xl">+</button>
+            <button onClick={() => setQty(Math.min(maxQty, qty + 1))} aria-label="数量を増やす" className="h-[50px] w-11 text-xl">+</button>
           </div>
           <button
+            disabled={soldOut}
             onClick={() => {
               addToCart(p.id, qty);
               router.push("/cart");
             }}
-            className="flex h-[52px] flex-1 items-center justify-center rounded-[14px] bg-gold text-[15px] font-bold text-ink"
+            className="flex h-[52px] flex-1 items-center justify-center rounded-[14px] bg-gold text-[15px] font-bold text-ink disabled:opacity-40"
           >
-            カートに入れる ・ {fmtPt(p.points * qty)}
+            {soldOut ? "売り切れ" : `カートに入れる ・ ${fmtPt(p.points * qty)}`}
           </button>
         </div>
       }
@@ -66,8 +68,9 @@ export default function GoodsDetail() {
             <span className="text-faint">›</span>
           </Link>
         )}
-        <p className="text-[13px] leading-[1.8] text-soft">{p.desc}</p>
-        <p className="text-[11px] text-dim">※ デモ商品のため、実際の発送は行われません</p>
+        <p className="whitespace-pre-wrap text-[13px] leading-[1.8] text-soft">{p.desc}</p>
+        {p.stock != null && <p className="text-xs text-mute">{soldOut ? "現在売り切れです" : `残り ${p.stock}点`}</p>}
+        {p.name.includes("デモ") && <p className="text-[11px] text-dim">※ デモ商品のため、実際の発送は行われません</p>}
       </div>
     </Screen>
   );
