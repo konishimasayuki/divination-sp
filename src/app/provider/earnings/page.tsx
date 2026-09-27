@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useProviderMe } from "@/lib/useProviderMe";
 import { add, fmtDate, fmtPt, list } from "@/lib/db";
-import type { Booking, HistoryItem, Payout } from "@/lib/types";
+import type { Booking, HistoryItem, Order, Payout } from "@/lib/types";
+import { rateOf, revenueOf } from "@/lib/earnings";
 import { IBank } from "@/components/icons";
 import { BackHeader, Loading, Screen, btnGold } from "@/components/ui";
 
@@ -12,6 +13,7 @@ export default function Earnings() {
   const [hist, setHist] = useState<HistoryItem[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [bank, setBank] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
@@ -19,25 +21,24 @@ export default function Earnings() {
     if (!me) return;
     list<HistoryItem>("history", { providerId: me.id }).then(setHist);
     list<Booking>("bookings", { providerId: me.id }).then(setBookings);
+    list<Order>("orders").then(setOrders);
     list<Payout>("payouts", { providerId: me.id }).then((p) => setPayouts(p.sort((a, b) => b.createdAt - a.createdAt)));
   }, [me]);
 
   if (!ok || !me) return <Screen><Loading /></Screen>;
-  const share = app.settings.shareRate / 100;
+  const rate = rateOf(me, app.settings);
+  const rev = (from = 0, to = Infinity) => revenueOf(me.id, hist, orders, app.products, rate, from, to);
   const now = new Date();
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-    const sum = hist.filter((h) => h.createdAt >= d.getTime() && h.createdAt < end).reduce((s, h) => s + Math.abs(h.points), 0);
-    return { label: `${d.getMonth() + 1}月`, value: Math.round(sum * share) };
+    return { label: `${d.getMonth() + 1}月`, value: rev(d.getTime(), end).pay };
   });
   const max = Math.max(1, ...months.map((m) => m.value));
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const cur = hist.filter((h) => h.createdAt >= monthStart);
-  const byKind = (fn: (h: HistoryItem) => boolean) => Math.round(cur.filter(fn).reduce((s, h) => s + Math.abs(h.points), 0) * share);
-  const isVoice = (h: HistoryItem) => h.kind === "talk" && h.label.includes("音声");
-  const total = months[5].value;
-  const lifetime = Math.round(hist.reduce((s, h) => s + Math.abs(h.points), 0) * share);
+  const cur = rev(monthStart);
+  const total = cur.pay;
+  const lifetime = rev().pay;
   const paid = payouts.reduce((s, p) => s + p.amount, 0);
   const withdrawable = Math.max(0, lifetime - paid);
   const bankVal = bank ?? me.bankInfo ?? "";
@@ -64,7 +65,7 @@ export default function Earnings() {
     >
       <BackHeader title="報酬・出金" href="/provider" />
       <div className="mx-4 rounded-[20px] border border-line bg-card p-[18px]">
-        <div className="text-xs text-mute">今月の報酬見込み(分配率 {app.settings.shareRate}% 適用後)</div>
+        <div className="text-xs text-mute">今月の報酬見込み(あなたの分配率 {rate}%)</div>
         <div className="mt-1 text-[32px] font-bold text-gold">{fmtPt(total)}</div>
         <div className="mt-3.5 flex h-24 items-end gap-3">
           {months.map((m, i) => (
@@ -76,17 +77,18 @@ export default function Earnings() {
         </div>
       </div>
 
-      <div className="mx-5 mb-2 mt-4 text-[13px] font-medium text-lav">今月の内訳 ・ 鑑定 {bookings.filter((b) => b.createdAt >= monthStart).length}件</div>
+      <div className="mx-5 mb-2 mt-4 text-[13px] font-medium text-lav">今月の売上の内訳 ・ 鑑定 {bookings.filter((b) => b.createdAt >= monthStart).length}件</div>
       <div className="mx-4 overflow-hidden rounded-2xl bg-card">
         {[
-          ["ビデオ通話", byKind((h) => h.kind === "talk" && !isVoice(h))],
-          ["音声通話", byKind(isVoice)],
-          ["メッセージ", byKind((h) => h.kind === "msg")],
-          ["いただいた感謝", byKind((h) => h.kind === "gift")],
+          ["ビデオ通話", cur.video],
+          ["音声通話", cur.voice],
+          ["メッセージ", cur.msg],
+          ["開運グッズ", cur.goods],
+          ["いただいた感謝", cur.gift],
         ].map(([k, v], i) => (
-          <div key={k as string} className={`flex h-[46px] items-center justify-between px-4 text-sm ${i < 3 ? "border-b border-deep" : ""}`}>
+          <div key={k as string} className={`flex h-[46px] items-center justify-between px-4 text-sm ${i < 4 ? "border-b border-deep" : ""}`}>
             <span>{k}</span>
-            <span className={`font-bold ${i === 3 ? "text-gold" : ""}`}>{fmtPt(v as number)}</span>
+            <span className={`font-bold ${i === 4 ? "text-gold" : ""}`}>{fmtPt(v as number)}</span>
           </div>
         ))}
       </div>

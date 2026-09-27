@@ -16,7 +16,7 @@ export const GIFTS = [
 ];
 
 export function GiftSheet({ provider, onClose, onSent }: { provider: Provider; onClose: () => void; onSent: (label: string) => void }) {
-  const { user, spend } = useApp();
+  const { user, spend, settings } = useApp();
   const [sel, setSel] = useState(2);
   const [busy, setBusy] = useState(false);
   if (!user) return null;
@@ -26,7 +26,7 @@ export function GiftSheet({ provider, onClose, onSent }: { provider: Provider; o
   async function send() {
     if (!user) return;
     setBusy(true);
-    const ok = await spend(g.pt, { kind: "gift", providerId: provider.id, label: `${provider.name} へ感謝`, detail: g.name });
+    const ok = await spend(g.pt, { kind: "gift", providerId: provider.id, rate: provider.shareRate != null ? provider.shareRate : settings.shareRate, label: `${provider.name} へ感謝`, detail: g.name });
     if (ok) {
       await add("messages", {
         threadId: threadIdOf(user.id, provider.id),

@@ -19,6 +19,7 @@ export type Provider = {
   careerYears?: number;
   acceptNow?: boolean;
   bankInfo?: string;
+  shareRate?: number | null; // この先生の分配率(%)。未設定なら運営の標準値
   // 曜日(0=日〜6=土) → 受付枠インデックス(0=18:00 〜 15=25:30)
   schedule?: Record<string, number[]>;
 };

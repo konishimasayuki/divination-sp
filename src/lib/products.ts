@@ -10,6 +10,9 @@ export type Product = {
   stock?: number | null; // 在庫数(null・未設定は制限なし)
   published?: boolean; // お客様に公開するか
   deleted?: boolean;
+  suspended?: boolean; // 運営が公開停止中
+  removedByAdmin?: boolean; // 運営が削除した
+  removedReason?: string;
   createdAt?: number;
 };
 

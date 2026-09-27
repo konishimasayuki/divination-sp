@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { fmtPt, list, update } from "@/lib/db";
-import type { HistoryItem, Payout } from "@/lib/types";
+import type { HistoryItem, Order, Payout } from "@/lib/types";
+import { rateOf, revenueOf } from "@/lib/earnings";
 import { AdminShell, panel } from "@/components/AdminShell";
 
 export default function AdminPayout() {
-  const { settings } = useApp();
+  const { settings, providers, products } = useApp();
+  const [orders, setOrders] = useState<Order[]>([]);
   const [hist, setHist] = useState<HistoryItem[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
 
   useEffect(() => {
     list<HistoryItem>("history").then(setHist);
+    list<Order>("orders").then(setOrders);
     list<Payout>("payouts").then((p) => setPayouts(p.sort((a, b) => b.createdAt - a.createdAt)));
   }, []);
 
@@ -21,7 +24,8 @@ export default function AdminPayout() {
   const month = hist.filter((h) => h.createdAt >= monthStart);
   const spent = month.filter((h) => h.points < 0);
   const total = spent.reduce((s, h) => s + Math.abs(h.points), 0);
-  const tellerShare = Math.round(spent.filter((h) => h.providerId).reduce((s, h) => s + Math.abs(h.points), 0) * (settings.shareRate / 100));
+  const perTeller = providers.map((p) => ({ p, rate: rateOf(p, settings), rev: revenueOf(p.id, hist, orders, products, rateOf(p, settings), monthStart) }));
+  const tellerShare = perTeller.reduce((s, x) => s + x.rev.pay, 0);
   const bought = month.filter((h) => h.kind === "buy").reduce((s, h) => s + h.points, 0);
   const cats: [string, (h: HistoryItem) => boolean][] = [
     ["ビデオ通話", (h) => h.kind === "talk" && !h.label.includes("音声")],
@@ -47,7 +51,7 @@ export default function AdminPayout() {
         <div className={panel}>
           <div className="text-[13px] text-mute">占い師への支払い予定</div>
           <div className="mt-1.5 text-[28px] font-bold">{fmtPt(tellerShare)}</div>
-          <div className="mt-1 text-xs text-mute">分配率 {settings.shareRate}% で算出</div>
+          <div className="mt-1 text-xs text-mute">先生ごとの分配率で算出(標準 {settings.shareRate}%)</div>
         </div>
         <div className={panel}>
           <div className="text-[13px] text-mute">今月のポイント販売</div>
@@ -72,6 +76,26 @@ export default function AdminPayout() {
           })}
         </div>
 
+        <div className="flex flex-col gap-3.5">
+        <div className={`${panel} overflow-x-auto`}>
+          <div className="mb-2.5 text-[15px] font-bold">先生ごとの今月の売上と取り分</div>
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead className="text-xs text-dim">
+              <tr className="border-b border-deep"><th className="py-2 font-normal">先生</th><th className="text-right font-normal">売上</th><th className="text-right font-normal">うちグッズ</th><th className="text-right font-normal">分配率</th><th className="text-right font-normal">取り分</th></tr>
+            </thead>
+            <tbody>
+              {perTeller.map(({ p, rate, rev }) => (
+                <tr key={p.id} className="border-b border-[#211B3E]">
+                  <td className="py-2.5 font-bold">{p.name}</td>
+                  <td className="text-right">{fmtPt(rev.total)}</td>
+                  <td className="text-right text-lav">{fmtPt(rev.goods)}</td>
+                  <td className={`text-right ${p.shareRate != null ? "text-gold" : "text-lav"}`}>{rate}%</td>
+                  <td className="text-right font-bold">{fmtPt(rev.pay)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div className={`${panel} overflow-x-auto`}>
           <div className="mb-2.5 text-[15px] font-bold">出金申請</div>
           <table className="w-full min-w-[480px] text-left text-sm">
@@ -97,6 +121,7 @@ export default function AdminPayout() {
             </tbody>
           </table>
           <p className="mt-2.5 text-xs text-dim">承認後の振込は現在は手動です(Stripe Connectでの自動送金は今後対応)。</p>
+        </div>
         </div>
       </div>
     </AdminShell>

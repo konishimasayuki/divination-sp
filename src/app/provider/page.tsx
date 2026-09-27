@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProviderMe } from "@/lib/useProviderMe";
 import { fmtDay, fmtPt, list, ymd } from "@/lib/db";
-import type { Booking, HistoryItem, Message } from "@/lib/types";
+import type { Booking, HistoryItem, Message, Order } from "@/lib/types";
+import { rateOf, revenueOf } from "@/lib/earnings";
 import { Loading, Screen } from "@/components/ui";
 
 const STATES = [
@@ -20,12 +21,14 @@ export default function ProviderHome() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [hist, setHist] = useState<HistoryItem[]>([]);
   const [unread, setUnread] = useState(0);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     if (!me) return;
     const load = () => {
       list<Booking>("bookings", { providerId: me.id, status: "reserved" }).then((b) => setBookings(b.sort((a, c) => `${a.date}${a.time}`.localeCompare(`${c.date}${c.time}`))));
       list<HistoryItem>("history", { providerId: me.id }).then(setHist);
+      list<Order>("orders").then(setOrders);
       list<Message>("messages", { providerId: me.id }).then((m) => {
         const last = new Map<string, Message>();
         m.filter((x) => x.from !== "system").forEach((x) => {
@@ -45,10 +48,9 @@ export default function ProviderHome() {
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const month = hist.filter((h) => h.createdAt >= monthStart);
-  const share = app.settings.shareRate / 100;
-  const earnings = Math.round(month.reduce((s, h) => s + Math.abs(h.points), 0) * share);
-  const gifts = month.filter((h) => h.kind === "gift").reduce((s, h) => s + Math.abs(h.points), 0);
+  const rev = revenueOf(me.id, hist, orders, app.products, rateOf(me, app.settings), monthStart);
+  const earnings = rev.pay;
+  const gifts = rev.gift;
   const today = ymd(now);
 
   return (

@@ -17,7 +17,7 @@ function hm(ts: number) {
 export default function Thread() {
   const ok = useGuard("user");
   const { pid } = useParams<{ pid: string }>();
-  const { user, providers, spend } = useApp();
+  const { user, providers, spend, settings } = useApp();
   const p = providers.find((x) => x.id === pid);
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -55,7 +55,7 @@ export default function Thread() {
     if (!body) return;
     setBusy(true);
     setError("");
-    const paid = await spend(cost, { kind: "msg", providerId: p.id, label: `${p.name} ・ メッセージ`, detail: `${body.length}文字` });
+    const paid = await spend(cost, { kind: "msg", providerId: p.id, rate: p.shareRate != null ? p.shareRate : settings.shareRate, label: `${p.name} ・ メッセージ`, detail: `${body.length}文字` });
     if (!paid) {
       setBusy(false);
       setError("ポイントが不足しています");

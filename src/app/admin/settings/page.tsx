@@ -57,10 +57,11 @@ export default function AdminSettings() {
       <div className="mb-3 mt-7 text-[15px] font-bold">料金・特典の設定</div>
       <div className="grid gap-3.5 xl:grid-cols-2">
         <div className={`${panel} grid grid-cols-2 gap-3`}>
+          <p className="col-span-2 text-xs text-dim">分配率の標準は、個別に設定していない先生に使われます。先生ごとの分配率は「占い師管理」で変更できます。変更は、これからの取引から適用されます。</p>
           <label className="flex flex-col gap-1.5 text-xs text-lav">AI手相 1回(pt)<input className={fi} inputMode="numeric" value={v.palmCost} onChange={(e) => setNum("palmCost", e.target.value)} /></label>
           <label className="flex flex-col gap-1.5 text-xs text-lav">会員登録特典(pt)<input className={fi} inputMode="numeric" value={v.signupBonus} onChange={(e) => setNum("signupBonus", e.target.value)} /></label>
           <label className="flex flex-col gap-1.5 text-xs text-lav">通話の無料準備時間(分)<input className={fi} inputMode="numeric" value={v.prepMinutes} onChange={(e) => setNum("prepMinutes", e.target.value)} /></label>
-          <label className="flex flex-col gap-1.5 text-xs text-lav">占い師への分配率(%)<input className={fi} inputMode="numeric" value={v.shareRate} onChange={(e) => setNum("shareRate", e.target.value)} /></label>
+          <label className="flex flex-col gap-1.5 text-xs text-lav">占い師への分配率・標準(%)<input className={fi} inputMode="numeric" value={v.shareRate} onChange={(e) => setNum("shareRate", e.target.value)} /></label>
         </div>
         <div className={`${panel} flex flex-col gap-2.5`}>
           <div className="text-xs text-lav">ポイントパック</div>

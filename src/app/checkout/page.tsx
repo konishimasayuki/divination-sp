@@ -21,6 +21,7 @@ export default function Checkout() {
   const ok = useGuard("user");
   const router = useRouter();
   const { user, providers, settings, spend } = useApp();
+  const rateNow = (pid: string) => { const pr = providers.find((x) => x.id === pid); return pr?.shareRate != null ? pr.shareRate : settings.shareRate; };
   const [draft, setDraft] = useState<Draft | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,7 +43,7 @@ export default function Checkout() {
     setBusy(true);
     setError("");
     const label = `${p.name} ・ ${draft.method === "video" ? "ビデオ" : "音声"}${draft.minutes}分`;
-    const paid = await spend(draft.points, { kind: "talk", providerId: p.id, label, detail: `${fmtDay(draft.date)} ${draft.time} 予約` });
+    const paid = await spend(draft.points, { kind: "talk", providerId: p.id, rate: rateNow(p.id), label, detail: `${fmtDay(draft.date)} ${draft.time} 予約` });
     if (!paid) {
       setBusy(false);
       setError("ポイントが不足しています");

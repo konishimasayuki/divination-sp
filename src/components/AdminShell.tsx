@@ -13,6 +13,7 @@ const MENU = [
   ["/admin/users", "会員管理"],
   ["/admin/payout", "売上・出金"],
   ["/admin/bookings", "予約・鑑定ログ"],
+  ["/admin/products", "商品管理"],
   ["/admin/orders", "グッズ・注文"],
   ["/admin/settings", "API・料金設定"],
   ["/admin/video-test", "ビデオテスト"],

@@ -12,13 +12,13 @@ import { BackHeader, Loading, Screen } from "@/components/ui";
 export default function Cart() {
   const ok = useGuard("user");
   const router = useRouter();
-  const { user, cart, setCartQty, clearCart, spend, saveUser, products, saveProduct, refreshProducts } = useApp();
+  const { user, cart, setCartQty, clearCart, spend, saveUser, products, saveProduct, refreshProducts, providers, settings } = useApp();
   const [address, setAddress] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   if (!ok || !user) return <Screen><Loading /></Screen>;
 
-  const productMap: Record<string, Product> = Object.fromEntries(products.filter((p) => !p.deleted && p.published !== false).map((p) => [p.id, p]));
+  const productMap: Record<string, Product> = Object.fromEntries(products.filter((p) => !p.deleted && !p.suspended && p.published !== false).map((p) => [p.id, p]));
   const lines = cart.filter((c) => productMap[c.productId]);
   const total = lines.reduce((s, c) => s + productMap[c.productId].points * c.qty, 0);
   const addr = address ?? user.address ?? "";
@@ -50,7 +50,7 @@ export default function Cart() {
       setError("ポイントが不足しています");
       return;
     }
-    await add("orders", { userId: user.id, items: lines, total, address: addr.trim(), providerIds: Array.from(new Set(lines.map((c) => productMap[c.productId].providerId || ""))) });
+    await add("orders", { userId: user.id, items: lines.map((c) => ({ ...c, points: productMap[c.productId].points, providerId: productMap[c.productId].providerId || "", rate: (() => { const pr = providers.find((x) => x.id === productMap[c.productId].providerId); return pr?.shareRate != null ? pr.shareRate : settings.shareRate; })() })), total, address: addr.trim(), providerIds: Array.from(new Set(lines.map((c) => productMap[c.productId].providerId || ""))) });
     for (const c of lines) {
       const lp = latest.find((x) => x.id === c.productId);
       if (lp && lp.stock != null) await saveProduct(c.productId, { stock: Math.max(0, lp.stock - c.qty) });

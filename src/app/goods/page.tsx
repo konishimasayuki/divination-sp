@@ -14,7 +14,7 @@ export default function Goods() {
   const [cat, setCat] = useState("すべて");
   if (!ok) return <Screen nav="goods"><Loading /></Screen>;
   const count = cart.reduce((s, c) => s + c.qty, 0);
-  const live = products.filter((p) => p.published !== false && !p.deleted);
+  const live = products.filter((p) => p.published !== false && !p.deleted && !p.suspended);
   const rows = live.filter((p) => cat === "すべて" || p.category === cat);
   const pick = live.find((p) => p.id === "pr1") ?? live[0];
   const sup = providers.find((p) => p.id === pick?.providerId);

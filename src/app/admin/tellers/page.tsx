@@ -3,23 +3,26 @@
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { fmtPt, list } from "@/lib/db";
-import type { HistoryItem } from "@/lib/types";
+import type { HistoryItem, Order } from "@/lib/types";
+import { rateOf, revenueOf } from "@/lib/earnings";
 import { AdminShell, panel } from "@/components/AdminShell";
 
-type Form = { name: string; tag: string; chatRate: string; callRate: string; voiceRate: string; loginId: string; loginPassword: string; visible: boolean; isAI: boolean };
-const empty: Form = { name: "", tag: "", chatRate: "50", callRate: "120", voiceRate: "90", loginId: "", loginPassword: "", visible: true, isAI: false };
+type Form = { name: string; tag: string; chatRate: string; callRate: string; voiceRate: string; shareRate: string; loginId: string; loginPassword: string; visible: boolean; isAI: boolean };
+const empty: Form = { name: "", tag: "", chatRate: "50", callRate: "120", voiceRate: "90", shareRate: "", loginId: "", loginPassword: "", visible: true, isAI: false };
 const fi = "h-10 w-full rounded-[10px] border border-edge bg-night px-3 text-sm outline-none focus:border-gold";
 
 export default function AdminTellers() {
-  const { providers, saveProvider, addProvider } = useApp();
+  const { providers, saveProvider, addProvider, settings, products } = useApp();
   const [sel, setSel] = useState<string | "new">(providers[0]?.id ?? "new");
   const [form, setForm] = useState<Form>(empty);
   const [hist, setHist] = useState<HistoryItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [msg, setMsg] = useState("");
   const [showPw, setShowPw] = useState(false);
 
   useEffect(() => {
     list<HistoryItem>("history").then(setHist);
+    list<Order>("orders").then(setOrders);
   }, []);
 
   useEffect(() => {
@@ -29,11 +32,11 @@ export default function AdminTellers() {
       return;
     }
     const p = providers.find((x) => x.id === sel);
-    if (p) setForm({ name: p.name, tag: p.tag, chatRate: String(p.chatRate), callRate: String(p.callRate), voiceRate: String(p.voiceRate), loginId: p.loginId, loginPassword: p.loginPassword, visible: p.visible !== false, isAI: !!p.isAI });
+    if (p) setForm({ name: p.name, tag: p.tag, chatRate: String(p.chatRate), callRate: String(p.callRate), voiceRate: String(p.voiceRate), shareRate: p.shareRate != null ? String(p.shareRate) : "", loginId: p.loginId, loginPassword: p.loginPassword, visible: p.visible !== false, isAI: !!p.isAI });
   }, [sel, providers]);
 
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-  const sales = (id: string) => hist.filter((h) => h.providerId === id && h.createdAt >= monthStart).reduce((s, h) => s + Math.abs(h.points), 0);
+  const sales = (id: string) => revenueOf(id, hist, orders, products, rateOf(providers.find((x) => x.id === id), settings), monthStart).total;
   const set = (k: keyof Form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
 
   async function save() {
@@ -52,6 +55,7 @@ export default function AdminTellers() {
       chatRate: Number(form.chatRate) || 50,
       callRate: Number(form.callRate) || 120,
       voiceRate: Number(form.voiceRate) || 90,
+      shareRate: form.shareRate.trim() === "" ? null : Math.min(100, Math.max(0, Number(form.shareRate.replace(/[^\d]/g, "")) || 0)),
       loginId: form.loginId.trim(),
       loginPassword: form.loginPassword,
       visible: form.visible,
@@ -70,10 +74,10 @@ export default function AdminTellers() {
       <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <div>
           <div className={`${panel} overflow-x-auto p-0 lg:p-0`}>
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="text-xs text-dim">
                 <tr className="border-b border-deep">
-                  <th className="px-4 py-3 font-normal">名前</th><th className="py-3 font-normal">占術</th><th className="py-3 font-normal">メッセージ</th><th className="py-3 font-normal">ビデオ</th><th className="py-3 font-normal">状態</th><th className="px-4 py-3 text-right font-normal">今月の売上</th>
+                  <th className="px-4 py-3 font-normal">名前</th><th className="py-3 font-normal">占術</th><th className="py-3 font-normal">メッセージ</th><th className="py-3 font-normal">ビデオ</th><th className="py-3 font-normal">分配率</th><th className="py-3 font-normal">状態</th><th className="px-4 py-3 text-right font-normal">今月の売上</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +93,7 @@ export default function AdminTellers() {
                     <td className="text-lav">{p.tag}</td>
                     <td>{p.chatRate}pt/字</td>
                     <td>{p.callRate}pt/分</td>
+                    <td className={p.shareRate != null ? "font-bold text-gold" : "text-lav"}>{rateOf(p, settings)}%</td>
                     <td className={`text-xs ${p.status === "available" ? "text-mint" : p.status === "busy" ? "text-gold" : "text-dim"}`}>
                       ● {p.status === "available" ? "待機中" : p.status === "busy" ? "鑑定中" : "休止中"}
                     </td>
@@ -98,7 +103,7 @@ export default function AdminTellers() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2.5 text-xs text-dim">行をクリックすると編集できます。状態(待機中など)とプロフィール文・写真は占い師本人が設定します。</p>
+          <p className="mt-2.5 text-xs text-dim">行をクリックすると編集できます。状態(待機中など)とプロフィール文・写真は占い師本人が設定します。金色の分配率は個別に設定した先生です。</p>
         </div>
 
         <div className={`${panel} flex flex-col gap-3.5 self-start`}>
@@ -110,6 +115,15 @@ export default function AdminTellers() {
             <label className="flex flex-col gap-1.5 text-xs text-lav">ビデオ/分<input inputMode="numeric" className={fi} value={form.callRate} onChange={(e) => set("callRate", e.target.value)} /></label>
             <label className="flex flex-col gap-1.5 text-xs text-lav">音声/分<input inputMode="numeric" className={fi} value={form.voiceRate} onChange={(e) => set("voiceRate", e.target.value)} /></label>
           </div>
+          <label className="flex flex-col gap-1.5 text-xs text-lav">
+            先生の取り分(分配率 %)
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => set("shareRate", String(Math.max(0, (form.shareRate === "" ? settings.shareRate : Number(form.shareRate)) - 5)))} className="h-10 w-10 shrink-0 rounded-[10px] border border-edge text-lg" aria-label="5%下げる">−</button>
+              <input inputMode="numeric" className={fi} value={form.shareRate} onChange={(e) => set("shareRate", e.target.value)} placeholder={`標準 ${settings.shareRate}%`} />
+              <button type="button" onClick={() => set("shareRate", String(Math.min(100, (form.shareRate === "" ? settings.shareRate : Number(form.shareRate)) + 5)))} className="h-10 w-10 shrink-0 rounded-[10px] border border-edge text-lg" aria-label="5%上げる">+</button>
+            </div>
+            <span className="text-[11px] text-dim">空欄なら標準({settings.shareRate}%)。変更はこれからの取引から適用されます。{form.shareRate !== "" && <button type="button" onClick={() => set("shareRate", "")} className="ml-2 text-gold">標準に戻す</button>}</span>
+          </label>
           <div className="my-1 h-px bg-deep" />
           <div className="text-[13px] font-bold">ログイン情報</div>
           <label className="flex flex-col gap-1.5 text-xs text-lav">ログインID<input className={fi} value={form.loginId} onChange={(e) => set("loginId", e.target.value)} autoComplete="off" /></label>

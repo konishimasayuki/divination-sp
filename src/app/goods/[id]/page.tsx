@@ -14,7 +14,7 @@ export default function GoodsDetail() {
   const router = useRouter();
   const { providers, addToCart, cart, products } = useApp();
   const [qty, setQty] = useState(1);
-  const p = products.find((x) => x.id === id && !x.deleted);
+  const p = products.find((x) => x.id === id && !x.deleted && !x.suspended);
   if (!ok) return <Screen><Loading /></Screen>;
   if (!p) return <Screen><Loading label="商品が見つかりません" /></Screen>;
   const sup = providers.find((x) => x.id === p.providerId);

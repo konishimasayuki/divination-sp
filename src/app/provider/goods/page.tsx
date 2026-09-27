@@ -31,7 +31,7 @@ export default function ProviderGoods() {
   }, [tab]);
 
   if (!ok || !me) return <Screen><Loading /></Screen>;
-  const mine = app.products.filter((p) => p.providerId === me.id && !p.deleted);
+  const mine = app.products.filter((p) => p.providerId === me.id && (!p.deleted || p.removedByAdmin));
   const mineIds = new Set(mine.map((p) => p.id));
   const myOrders = orders.filter((o) => o.items.some((it) => mineIds.has(it.productId)));
   const set = (k: keyof Form, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
@@ -152,6 +152,9 @@ export default function ProviderGoods() {
               <span className="absolute top-[3px] h-6 w-6 rounded-full bg-text" style={{ left: f.published ? 25 : 3 }} />
             </span>
           </button>
+          {editing !== "new" && app.products.find((x) => x.id === editing)?.suspended && (
+            <p className="rounded-xl bg-[#3A2F18] px-3 py-2.5 text-xs leading-relaxed text-gold-hi">この商品は運営が公開を停止しています。内容を直したら、運営にご連絡ください。</p>
+          )}
           <p className="text-[11px] text-dim">お客様の画面では「{me.name} 監修」と表示されます。</p>
           {error && <p className="text-xs text-rose">{error}</p>}
         </div>
@@ -172,14 +175,23 @@ export default function ProviderGoods() {
         <div className="mx-4 mt-4 flex flex-col gap-2.5 pb-6">
           {mine.length === 0 && <p className="rounded-2xl bg-card p-6 text-center text-sm leading-relaxed text-mute">まだ商品がありません。<br />下のボタンから登録できます。</p>}
           {mine.map((p) => (
-            <button key={p.id} onClick={() => open(p)} className="flex items-center gap-3 rounded-2xl border border-line bg-card p-3 text-left text-text">
+            <button key={p.id} disabled={!!p.deleted} onClick={() => open(p)} className={`flex items-center gap-3 rounded-2xl border bg-card p-3 text-left text-text ${p.deleted ? "border-[#5A2A33] opacity-80" : "border-line"}`}>
               <img src={p.image} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-bold">{p.name}</div>
                 <div className="mt-0.5 text-xs text-mute">{p.category} ・ {p.stock == null ? "在庫 制限なし" : p.stock === 0 ? "売り切れ" : `在庫 ${p.stock}`}</div>
                 <div className="mt-0.5 text-sm font-bold text-gold">{fmtPt(p.points)}</div>
               </div>
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${p.published !== false ? "bg-[#1F3A33] text-mint-hi" : "bg-deep text-mute"}`}>{p.published !== false ? "公開中" : "非公開"}</span>
+              {p.deleted ? (
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="rounded-full bg-[#3A1C24] px-2.5 py-1 text-[11px] font-bold text-[#F0A9B4]">運営が削除</span>
+                  {p.removedReason && <span className="max-w-[120px] text-right text-[10px] leading-snug text-[#F0A9B4]">{p.removedReason}</span>}
+                </span>
+              ) : p.suspended ? (
+                <span className="shrink-0 rounded-full bg-[#3A2F18] px-2.5 py-1 text-[11px] font-bold text-gold-hi">運営が公開停止</span>
+              ) : (
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${p.published !== false ? "bg-[#1F3A33] text-mint-hi" : "bg-deep text-mute"}`}>{p.published !== false ? "公開中" : "非公開"}</span>
+              )}
             </button>
           ))}
         </div>
