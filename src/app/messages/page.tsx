@@ -80,7 +80,14 @@ export default function Messages() {
                   </div>
                   <div className="mt-1 flex items-center gap-1.5">
                     {m.from === "system" && <span className="flex h-5 shrink-0 items-center rounded-full bg-gold px-2 text-[10px] font-bold text-ink">予約確定</span>}
-                    <span className="truncate text-[13px] text-mute">{m.text}</span>
+                    {m.from === "provider" && (m.price ?? 0) > 0 && !m.unlocked ? (
+                      <>
+                        <span className="flex h-5 shrink-0 items-center rounded-full bg-rose px-2 text-[10px] font-bold text-ink">未開封</span>
+                        <span className="truncate text-[13px] text-mute">返信が届いています</span>
+                      </>
+                    ) : (
+                      <span className="truncate text-[13px] text-mute">{m.text}</span>
+                    )}
                   </div>
                 </div>
               </Link>

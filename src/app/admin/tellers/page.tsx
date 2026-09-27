@@ -91,7 +91,7 @@ export default function AdminTellers() {
                       </span>
                     </td>
                     <td className="text-lav">{p.tag}</td>
-                    <td>{p.chatRate}pt/字</td>
+                    <td>返信 {p.replyRate ?? 500}pt</td>
                     <td>{p.callRate}pt/分</td>
                     <td className={p.shareRate != null ? "font-bold text-gold" : "text-lav"}>{rateOf(p, settings)}%</td>
                     <td className={`text-xs ${p.status === "available" ? "text-mint" : p.status === "busy" ? "text-gold" : "text-dim"}`}>
@@ -110,11 +110,11 @@ export default function AdminTellers() {
           <div className="font-mincho text-lg font-bold">{sel === "new" ? "新しい占い師を追加" : `${form.name} を編集`}</div>
           <label className="flex flex-col gap-1.5 text-xs text-lav">表示名<input className={fi} value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="例: 心先生" /></label>
           <label className="flex flex-col gap-1.5 text-xs text-lav">占術・得意分野<input className={fi} value={form.tag} onChange={(e) => set("tag", e.target.value)} placeholder="例: 西洋占星術・恋愛" /></label>
-          <div className="grid grid-cols-3 gap-2">
-            <label className="flex flex-col gap-1.5 text-xs text-lav">メッセージ/字<input inputMode="numeric" className={fi} value={form.chatRate} onChange={(e) => set("chatRate", e.target.value)} /></label>
+          <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1.5 text-xs text-lav">ビデオ/分<input inputMode="numeric" className={fi} value={form.callRate} onChange={(e) => set("callRate", e.target.value)} /></label>
             <label className="flex flex-col gap-1.5 text-xs text-lav">音声/分<input inputMode="numeric" className={fi} value={form.voiceRate} onChange={(e) => set("voiceRate", e.target.value)} /></label>
           </div>
+          <p className="-mt-1 text-[11px] text-dim">メッセージの返信料金(1通)は先生が自分で設定します。{sel !== "new" && `今の設定:${providers.find((x) => x.id === sel)?.replyRate ?? 500}pt`}</p>
           <label className="flex flex-col gap-1.5 text-xs text-lav">
             先生の取り分(分配率 %)
             <div className="flex items-center gap-2">

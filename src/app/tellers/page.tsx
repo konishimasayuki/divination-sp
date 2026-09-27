@@ -51,7 +51,7 @@ export default function Tellers() {
               </div>
               <div className="mt-0.5 truncate text-xs text-mute">{p.tag} ・ ★{p.rating}</div>
               <div className="mt-0.5 truncate text-xs text-gold">
-                メッセージ {p.chatRate}pt/字 ・ 通話 {p.callRate}pt/分
+                メッセージ返信 {p.replyRate ?? 500}pt/通 ・ 通話 {p.callRate}pt/分
               </div>
             </div>
             <span className="text-faint">›</span>

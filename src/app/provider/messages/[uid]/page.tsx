@@ -23,7 +23,7 @@ export default function ProviderThread() {
 
   const load = useCallback(async () => {
     if (!tid || !me) return;
-    const [m, b] = await Promise.all([list<Message>("messages", { threadId: tid }), list<Booking>("bookings", { userId: uid, providerId: me.id })]);
+    const [m, b] = await Promise.all([list<Message>("messages", { threadId: tid, _raw: "1" }), list<Booking>("bookings", { userId: uid, providerId: me.id })]);
     setMsgs(m.sort((a, c) => a.createdAt - c.createdAt));
     setBookings(b);
   }, [tid, uid, me]);
@@ -45,7 +45,7 @@ export default function ProviderThread() {
   async function send() {
     if (!me || !draft.trim()) return;
     setBusy(true);
-    await add("messages", { threadId: tid, userId: uid, providerId: me.id, from: "provider", text: draft.trim() });
+    await add("messages", { threadId: tid, userId: uid, providerId: me.id, from: "provider", text: draft.trim(), price: me.replyRate ?? 500 });
     setDraft("");
     await load();
     setBusy(false);
@@ -62,9 +62,9 @@ export default function ProviderThread() {
           </div>
           <label htmlFor="reply" className="sr-only">返信を入力</label>
           <textarea id="reply" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="返信を入力" className="resize-none rounded-[14px] border border-edge bg-night px-3.5 py-3 text-sm leading-relaxed outline-none focus:border-gold" />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-mute">先生からの返信はお客様のポイントを消費しません ・ {draft.length}文字</span>
-            <button onClick={send} disabled={busy || !draft.trim()} className="flex h-11 items-center rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[11px] leading-snug text-mute">お客様は {fmtPt(me.replyRate ?? 500)} で開封します(料金はプロフィール編集で変更) ・ {draft.length}文字</span>
+            <button onClick={send} disabled={busy || !draft.trim()} className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
           </div>
         </div>
       }
@@ -98,7 +98,9 @@ export default function ProviderThread() {
           return (
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>{m.text}</div>
-              {!mine && m.cost ? <div className="mt-1 text-[10px] text-dim">お客様 {m.text.length}文字 ・ {fmtPt(m.cost)}</div> : null}
+              {mine && (m.price ?? 0) > 0 ? (
+                <div className={`mt-1 text-[10px] ${m.unlocked ? "text-mint-hi" : "text-dim"}`}>{m.unlocked ? `お客様が開封済み ・ ${fmtPt(m.price ?? 0)}` : `未開封 ・ 開封で ${fmtPt(m.price ?? 0)}`}</div>
+              ) : null}
             </div>
           );
         })}

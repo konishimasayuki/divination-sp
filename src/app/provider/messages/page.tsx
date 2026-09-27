@@ -14,7 +14,7 @@ export default function ProviderMessages() {
 
   useEffect(() => {
     if (!me) return;
-    list<Message>("messages", { providerId: me.id }).then(setMsgs);
+    list<Message>("messages", { providerId: me.id, _raw: "1" }).then(setMsgs);
     list<User>("users").then(setUsers);
   }, [me]);
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { redis, redisConfigured } from "@/lib/redis";
 
 // AI占い師のメッセージ返信(Claude API)
 export async function POST(req: NextRequest) {
@@ -7,15 +8,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEYが設定されていません。" }, { status: 500 });
   }
   try {
-    const { persona, profile, history } = (await req.json()) as {
+    const { persona, profile, history: sent, threadId } = (await req.json()) as {
+      threadId?: string;
       persona: { name: string; tag: string; bio: string };
       profile: { name: string; birthday?: string; zodiac?: string; bloodType?: string };
       history: { from: string; text: string }[];
     };
-    const messages = history
-      .filter((m) => m.from !== "system")
-      .slice(-12)
-      .map((m) => ({ role: m.from === "user" ? "user" : "assistant", content: m.text }));
+    // 未開封の返信は画面側では本文が空なので、保存済みの全文から会話を組み立てる
+    let history = sent;
+    if (threadId && redisConfigured) {
+      const all = ((await redis.get<{ threadId: string; from: string; text: string; createdAt: number }[]>("col:messages")) ?? [])
+        .filter((m) => m.threadId === threadId)
+        .sort((a, b) => a.createdAt - b.createdAt);
+      if (all.length) history = all;
+    }
+    const messages: { role: string; content: string }[] = [];
+    for (const m of history.filter((x) => x.from !== "system" && x.text).slice(-16)) {
+      const role = m.from === "user" ? "user" : "assistant";
+      const last = messages[messages.length - 1];
+      if (last && last.role === role) last.content += "\n" + m.text;
+      else messages.push({ role, content: m.text });
+    }
     if (!messages.length || messages[messages.length - 1].role !== "user") {
       return NextResponse.json({ error: "返信するメッセージがありません。" }, { status: 400 });
     }

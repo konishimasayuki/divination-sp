@@ -25,7 +25,7 @@ export async function list<T>(name: string, filter: Record<string, string> = {})
     return data.items as T[];
   } catch {
     return localLoad(name).filter((it) =>
-      Object.entries(filter).every(([k, v]) => String(it[k]) === v)
+      Object.entries(filter).every(([k, v]) => k.startsWith("_") || String(it[k]) === v)
     ) as unknown as T[];
   }
 }

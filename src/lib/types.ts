@@ -41,6 +41,10 @@ export type Message = {
   text: string;
   bookingId?: string;
   cost?: number;
+  price?: number; // 先生の返信を開封する料金(0・未設定は無料で表示)
+  unlocked?: boolean; // お客様が開封済み
+  unlockedAt?: number;
+  locked?: boolean; // サーバーが本文を隠して返したとき
   createdAt: number;
 };
 

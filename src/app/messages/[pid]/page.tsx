@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useApp, useGuard } from "@/lib/store";
-import { add, fmtPt, list, threadIdOf, zodiacOf } from "@/lib/db";
+import { add, fmtPt, list, threadIdOf, update, zodiacOf } from "@/lib/db";
 import type { Booking, Message } from "@/lib/types";
 import { ICalendar, ISend } from "@/components/icons";
 import { BackHeader, Loading, Screen } from "@/components/ui";
@@ -25,6 +25,7 @@ export default function Thread() {
   const [busy, setBusy] = useState(false);
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState("");
+  const [opening, setOpening] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const tid = user ? threadIdOf(user.id, pid) : "";
 
@@ -47,7 +48,24 @@ export default function Thread() {
 
   if (!ok || !user) return <Screen><Loading /></Screen>;
   if (!p) return <Screen><Loading label="先生が見つかりません" /></Screen>;
-  const cost = text.trim().length * p.chatRate;
+  const replyRate = p.replyRate ?? 500;
+
+  // 先生の返信を開封する(ここでポイントを消費)
+  async function unlock(m: Message) {
+    if (!user || !p) return;
+    const price = m.price ?? 0;
+    setOpening(m.id);
+    setError("");
+    const paid = await spend(price, { kind: "msg", providerId: p.id, rate: p.shareRate != null ? p.shareRate : settings.shareRate, label: `${p.name} ・ メッセージ`, detail: "返信を開封" });
+    if (!paid) {
+      setOpening(null);
+      setError("ポイントが不足しています");
+      return;
+    }
+    await update("messages", m.id, { unlocked: true, unlockedAt: Date.now() });
+    await load();
+    setOpening(null);
+  }
 
   async function send() {
     if (!user || !p) return;
@@ -55,13 +73,7 @@ export default function Thread() {
     if (!body) return;
     setBusy(true);
     setError("");
-    const paid = await spend(cost, { kind: "msg", providerId: p.id, rate: p.shareRate != null ? p.shareRate : settings.shareRate, label: `${p.name} ・ メッセージ`, detail: `${body.length}文字` });
-    if (!paid) {
-      setBusy(false);
-      setError("ポイントが不足しています");
-      return;
-    }
-    const sent = await add<Message>("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "user", text: body, cost });
+    const sent = await add<Message>("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "user", text: body });
     setText("");
     const next = [...msgs, sent];
     setMsgs(next);
@@ -74,6 +86,7 @@ export default function Thread() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            threadId: tid,
             persona: { name: p.name, tag: p.tag, bio: p.bio },
             profile: { name: user.name, birthday: user.birthday, zodiac: zodiacOf(user.birthday), bloodType: user.bloodType },
             history: next.map((m) => ({ from: m.from, text: m.text })),
@@ -81,7 +94,7 @@ export default function Thread() {
         });
         const data = await res.json();
         if (res.ok && data.reply) {
-          await add("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "provider", text: data.reply });
+          await add("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "provider", text: data.reply, price: replyRate });
         } else {
           setError(data.error || "AIの返信に失敗しました");
         }
@@ -111,7 +124,7 @@ export default function Thread() {
             </button>
           </div>
           <div className="pl-3.5 text-[11px] text-mute">
-            {text.trim() ? `${text.trim().length}文字 ・ ${fmtPt(cost)}` : `送信時に1文字${p.chatRate}ptを消費します`}(保有 {fmtPt(user.points)})
+            送信は無料です。先生の返信は1通{fmtPt(replyRate)}で開封できます(保有 {fmtPt(user.points)})
           </div>
           {error && <div className="pl-3.5 text-[11px] text-rose">{error}</div>}
         </div>
@@ -122,7 +135,7 @@ export default function Thread() {
           <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
           <div className="ml-1.5 min-w-0">
             <div className="truncate text-[15px] font-bold">{p.name}</div>
-            <div className="text-[11px] text-mute">メッセージ {p.chatRate}pt / 1文字</div>
+            <div className="text-[11px] text-mute">送信無料 ・ 返信の開封 {fmtPt(replyRate)} / 1通</div>
           </div>
         </BackHeader>
       </div>
@@ -159,6 +172,27 @@ export default function Thread() {
             );
           }
           const mine = m.from === "user";
+          const locked = !mine && (m.price ?? 0) > 0 && !m.unlocked;
+          if (locked) {
+            return (
+              <div key={m.id} className="flex flex-col items-start">
+                <div className="w-[80%] overflow-hidden rounded-[18px_18px_18px_4px] border border-gold bg-card">
+                  <div className="px-4 pb-2 pt-3.5">
+                    <div className="text-xs font-bold text-gold">{p.name}から返信が届きました</div>
+                    <div className="mt-2 flex flex-col gap-1.5" aria-hidden>
+                      <span className="h-2.5 w-full rounded bg-deep" />
+                      <span className="h-2.5 w-11/12 rounded bg-deep" />
+                      <span className="h-2.5 w-3/5 rounded bg-deep" />
+                    </div>
+                  </div>
+                  <button onClick={() => unlock(m)} disabled={opening === m.id} className="flex h-11 w-full items-center justify-center bg-gold text-sm font-bold text-ink disabled:opacity-50">
+                    {opening === m.id ? "開いています" : `${fmtPt(m.price ?? 0)} で返信を読む`}
+                  </button>
+                </div>
+                <div className="mt-1 text-[10px] text-dim">{hm(m.createdAt)}</div>
+              </div>
+            );
+          }
           return (
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>
@@ -166,7 +200,7 @@ export default function Thread() {
               </div>
               <div className="mt-1 text-[10px] text-dim">
                 {hm(m.createdAt)}
-                {mine && m.cost ? ` ・ ${fmtPt(m.cost)}` : ""}
+                {!mine && m.unlocked && m.price ? ` ・ ${fmtPt(m.price)}で開封` : ""}
               </div>
             </div>
           );

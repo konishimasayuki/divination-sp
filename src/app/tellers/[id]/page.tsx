@@ -91,7 +91,7 @@ export default function TellerDetail() {
           <div className="mb-2 text-[13px] font-medium text-lav">相談方法と料金</div>
           <div className="flex flex-col gap-1.5">
             {[
-              ["メッセージ", `${p.chatRate}pt / 1文字`],
+              ["メッセージ(送信無料)", `返信 ${p.replyRate ?? 500}pt / 1通`],
               ["ビデオ通話", `${p.callRate}pt / 1分`],
               ["音声通話(顔出しなし)", `${p.voiceRate}pt / 1分`],
             ].map(([a, b]) => (

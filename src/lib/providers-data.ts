@@ -4,7 +4,8 @@ export type Provider = {
   tag: string;
   rating: number;
   status: "available" | "busy" | "off";
-  chatRate: number; // メッセージ 1文字あたりのポイント
+  chatRate: number; // (旧仕様)メッセージ1文字あたりのポイント。今は未使用
+  replyRate?: number; // メッセージの返信を開封する料金(1通あたり)。先生が自分で設定
   callRate: number; // ビデオ通話 1分あたりのポイント
   voiceRate: number; // 音声通話 1分あたりのポイント
   mailRate: number; // 旧仕様(未使用)
@@ -23,6 +24,8 @@ export type Provider = {
   // 曜日(0=日〜6=土) → 受付枠インデックス(0=18:00 〜 15=25:30)
   schedule?: Record<string, number[]>;
 };
+
+export const DEFAULT_REPLY_RATE = 500;
 
 const defaultSchedule: Record<string, number[]> = {
   "0": [],
@@ -177,6 +180,7 @@ export function normalizeProvider(p: Partial<Provider> & { id: string }): Provid
     careerYears: 0,
     acceptNow: true,
     schedule: defaultSchedule,
+    replyRate: DEFAULT_REPLY_RATE,
     ...(base ?? {}),
     ...p,
   } as Provider;
