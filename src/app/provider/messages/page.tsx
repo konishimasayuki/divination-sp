@@ -45,7 +45,7 @@ export default function ProviderMessages() {
                   <span className="truncate text-[15px] font-bold">{u?.name ?? "お客様"} さん</span>
                   {waiting && <span className="shrink-0 rounded-full bg-rose px-2 text-[10px] font-bold leading-5 text-ink">未返信</span>}
                 </div>
-                <div className="mt-1 truncate text-[13px] text-mute">{m.text}</div>
+                <div className="mt-1 truncate text-[13px] text-mute">{m.retracted ? "メッセージの送信が取り消されました" : m.text || (m.attachments?.length ? "写真・ファイルが届きました" : "")}</div>
               </div>
             </Link>
           );

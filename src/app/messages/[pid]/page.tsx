@@ -10,6 +10,7 @@ import { ICalendar, ISend } from "@/components/icons";
 import { AttachButton, AttachmentList, PendingFiles } from "@/components/Attachments";
 import { uploadAttachment } from "@/lib/attach";
 import { callWindow } from "@/lib/callWindow";
+import { canRetract, retractMessage, retractedLabel } from "@/lib/retract";
 import { BackHeader, Loading, Screen } from "@/components/ui";
 
 function hm(ts: number) {
@@ -60,6 +61,14 @@ export default function Thread() {
     const price = m.price ?? 0;
     setOpening(m.id);
     setError("");
+    // 支払う前に、取り消されていないか確認
+    const latest = (await list<Message>("messages", { id: m.id }))[0];
+    if (!latest || latest.retracted) {
+      setOpening(null);
+      setError("このメッセージは送信が取り消されました");
+      await load();
+      return;
+    }
     const paid = await spend(price, { kind: "msg", providerId: p.id, rate: p.shareRate != null ? p.shareRate : settings.shareRate, label: `${p.name} ・ メッセージ`, detail: "返信を開封" });
     if (!paid) {
       setOpening(null);
@@ -69,6 +78,17 @@ export default function Thread() {
     await update("messages", m.id, { unlocked: true, unlockedAt: Date.now() });
     await load();
     setOpening(null);
+  }
+
+  async function retract(m: Message) {
+    if (!window.confirm("このメッセージの送信を取り消しますか?(相手の画面からも消えます)")) return;
+    setError("");
+    try {
+      await retractMessage(m.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "取り消せませんでした");
+    }
+    await load();
   }
 
   async function send() {
@@ -191,6 +211,13 @@ export default function Thread() {
             );
           }
           const mine = m.from === "user";
+          if (m.retracted) {
+            return (
+              <div key={m.id} className="self-center rounded-full bg-card px-3.5 py-1.5 text-[11px] text-mute">
+                {retractedLabel(mine, p.name)}
+              </div>
+            );
+          }
           const locked = !mine && (m.price ?? 0) > 0 && !m.unlocked;
           if (locked) {
             return (
@@ -223,6 +250,9 @@ export default function Thread() {
               <div className="mt-1 text-[10px] text-dim">
                 {hm(m.createdAt)}
                 {!mine && m.unlocked && m.price ? ` ・ ${fmtPt(m.price)}で開封` : ""}
+                {mine && canRetract(m) && (
+                  <button onClick={() => retract(m)} className="ml-2 text-lav underline underline-offset-2">取り消す</button>
+                )}
               </div>
             </div>
           );

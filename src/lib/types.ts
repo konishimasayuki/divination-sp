@@ -55,6 +55,8 @@ export type Message = {
   unlocked?: boolean; // お客様が開封済み
   unlockedAt?: number;
   locked?: boolean; // サーバーが本文を隠して返したとき
+  retracted?: boolean; // 送信者が送信を取り消した
+  retractedAt?: number;
   createdAt: number;
 };
 

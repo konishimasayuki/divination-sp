@@ -10,6 +10,7 @@ import { BackHeader, Loading, Screen } from "@/components/ui";
 import { AttachButton, AttachmentList, PendingFiles } from "@/components/Attachments";
 import { uploadAttachment } from "@/lib/attach";
 import { callWindow } from "@/lib/callWindow";
+import { canRetract, retractMessage, retractedLabel } from "@/lib/retract";
 
 const PHRASES = ["ご相談ありがとうございます。", "カードで見てみますね。", "通話でじっくりお話ししませんか?", "ご都合のよい日時を教えてください。"];
 
@@ -49,6 +50,24 @@ export default function ProviderThread() {
   if (!ok || !me) return <Screen><Loading /></Screen>;
 
   const rate = me.replyRate ?? 500;
+
+  // 送信取り消し。edit=true なら本文を入力欄に戻して、料金を選び直して送れるようにする
+  async function retract(m: Message, edit: boolean) {
+    const q = edit ? "送信を取り消して、入力欄に戻しますか?(料金を選び直して送り直せます)" : "このメッセージの送信を取り消しますか?(お客様の画面からも消えます)";
+    if (!window.confirm(q)) return;
+    setError("");
+    try {
+      await retractMessage(m.id);
+      if (edit) {
+        setDraft(m.text);
+        setPaid(!((m.price ?? 0) > 0));
+        if (m.attachments?.length) setError("添付ファイルは戻せないため、もう一度選んでください");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "取り消せませんでした");
+    }
+    await load();
+  }
 
   async function send() {
     if (!me || (!draft.trim() && !files.length)) return;
@@ -137,6 +156,13 @@ export default function ProviderThread() {
             );
           }
           const mine = m.from === "provider";
+          if (m.retracted) {
+            return (
+              <div key={m.id} className="self-center rounded-full bg-card px-3.5 py-1.5 text-[11px] text-mute">
+                {retractedLabel(mine, `${client?.name ?? "お客様"}さん`)}
+              </div>
+            );
+          }
           return (
             <div key={m.id} className={`flex flex-col gap-1.5 ${mine ? "items-end" : "items-start"}`}>
               {m.text && <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>{m.text}</div>}
@@ -146,6 +172,14 @@ export default function ProviderThread() {
               ) : mine ? (
                 <div className="text-[10px] text-dim">無料で送信</div>
               ) : null}
+              {mine && canRetract(m) && (
+                <div className="flex gap-3 text-[11px]">
+                  <button onClick={() => retract(m, true)} className="text-gold underline underline-offset-2">
+                    取り消して{(m.price ?? 0) > 0 ? "無料で" : "有料で"}送り直す
+                  </button>
+                  <button onClick={() => retract(m, false)} className="text-lav underline underline-offset-2">取り消す</button>
+                </div>
+              )}
             </div>
           );
         })}

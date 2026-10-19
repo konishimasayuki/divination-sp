@@ -40,7 +40,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
     let result = items.filter((it) => filters.every(([k, v]) => String(it[k]) === v));
     if (name === "messages" && !raw) {
       // 開封前の先生の返信は本文を送らない
-      result = result.map((m) => (m.from === "provider" && Number(m.price) > 0 && !m.unlocked ? { ...m, text: "", attachments: undefined, locked: true } : m));
+      result = result.map((m) =>
+        m.retracted
+          ? { ...m, text: "", attachments: undefined }
+          : m.from === "provider" && Number(m.price) > 0 && !m.unlocked
+            ? { ...m, text: "", attachments: undefined, locked: true }
+            : m
+      );
     }
     return NextResponse.json({ items: result });
   } catch (e) {
@@ -84,6 +90,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ name: str
   try {
     const { id, updates } = await req.json();
     const items = await load(name);
+    if (name === "messages") {
+      // 送信取り消しと開封の行き違いを防ぐ
+      const cur = items.find((it) => it.id === id);
+      if (cur && updates?.retracted && Number(cur.price) > 0 && cur.unlocked) {
+        return NextResponse.json({ error: "お客様が開封済みのため取り消せません" }, { status: 409 });
+      }
+      if (cur && updates?.unlocked && cur.retracted) {
+        return NextResponse.json({ error: "このメッセージは送信が取り消されました" }, { status: 409 });
+      }
+    }
     let updated: Item | null = null;
     const next = items.map((it) => {
       if (it.id !== id) return it;
