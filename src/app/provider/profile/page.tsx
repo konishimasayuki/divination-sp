@@ -79,7 +79,7 @@ export default function ProviderProfile() {
       </div>
 
       <div className="mx-4 mt-4 flex flex-col gap-1.5">
-        <label htmlFor="rr" className="text-[13px] text-lav">メッセージの返信料金(1通)</label>
+        <label htmlFor="rr" className="text-[13px] text-lav">メッセージの返信料金(1通・標準)</label>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setReply(String(Math.max(0, rr - 100)))} aria-label="100pt下げる" className="h-12 w-12 shrink-0 rounded-xl border border-edge text-xl">−</button>
           <div className="relative flex-1">
@@ -88,11 +88,11 @@ export default function ProviderProfile() {
           </div>
           <button type="button" onClick={() => setReply(String(rr + 100))} aria-label="100pt上げる" className="h-12 w-12 shrink-0 rounded-xl border border-edge text-xl">+</button>
         </div>
-        <p className="text-[11px] leading-relaxed text-dim">お客様のメッセージ送信は無料です。あなたの返信をお客様が開封するときに、この料金がかかります(標準 500pt)。変更は、これから送る返信から適用されます。</p>
+        <p className="text-[11px] leading-relaxed text-dim">お客様のメッセージ送信は無料です。あなたの返信をお客様が開封するときに、この料金がかかります(標準 500pt)。変更は、これから送る返信から適用されます。メッセージ画面で1通ごとに金額を変えたり、無料にしたりもできます。</p>
       </div>
 
       <div className="mx-4 mb-6 mt-4 rounded-[14px] bg-card px-3.5 py-3 text-xs leading-[1.7] text-mute">
-        通話の料金(ビデオ {me.callRate}pt/分 ・ 音声 {me.voiceRate}pt/分)・分配率・ログイン情報は運営が設定しています。変更は運営までご連絡ください。
+        通話の料金(ビデオ {me.callRate}pt/分 ・ 音声 {me.voiceRate}pt/分)・システム手数料・ログイン情報は運営が設定しています。変更は運営までご連絡ください。
       </div>
       {error && <p className="mx-4 text-xs text-rose">{error}</p>}
     </Screen>

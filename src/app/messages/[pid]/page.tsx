@@ -1,5 +1,6 @@
 "use client";
 
+import { feeOf } from "@/lib/earnings";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -69,7 +70,7 @@ export default function Thread() {
       await load();
       return;
     }
-    const paid = await spend(price, { kind: "msg", providerId: p.id, rate: p.shareRate != null ? p.shareRate : settings.shareRate, label: `${p.name} ・ メッセージ`, detail: "返信を開封" });
+    const paid = await spend(price, { kind: "msg", providerId: p.id, fee: feeOf(p, settings), label: `${p.name} ・ メッセージ`, detail: "返信を開封" });
     if (!paid) {
       setOpening(null);
       setError("ポイントが不足しています");
@@ -159,7 +160,7 @@ export default function Thread() {
             </button>
           </div>
           <div className="pl-3.5 text-[11px] text-mute">
-            {busy && files.length ? "添付ファイルを送っています…" : <>送信は無料です。有料の返信は1通{fmtPt(replyRate)}で開封できます(保有 {fmtPt(user.points)})</>}
+            {busy && files.length ? "添付ファイルを送っています…" : <>送信は無料です。有料の返信は、開封するときにポイントがかかります(保有 {fmtPt(user.points)})</>}
           </div>
           {error && <div className="pl-3.5 text-[11px] text-rose">{error}</div>}
         </div>
@@ -170,7 +171,7 @@ export default function Thread() {
           <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
           <div className="ml-1.5 min-w-0">
             <div className="truncate text-[15px] font-bold">{p.name}</div>
-            <div className="text-[11px] text-mute">送信無料 ・ 有料の返信は {fmtPt(replyRate)} / 1通</div>
+            <div className="text-[11px] text-mute">送信無料 ・ 返信の開封 標準{fmtPt(replyRate)} / 1通</div>
           </div>
         </BackHeader>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { feeOf } from "@/lib/earnings";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -52,7 +53,7 @@ function Cart() {
       setError("ポイントが不足しています");
       return;
     }
-    await add("orders", { userId: user.id, items: lines.map((c) => ({ ...c, points: productMap[c.productId].points, providerId: productMap[c.productId].providerId || "", rate: (() => { const pr = providers.find((x) => x.id === productMap[c.productId].providerId); return pr?.shareRate != null ? pr.shareRate : settings.shareRate; })() })), total, address: addr.trim(), providerIds: Array.from(new Set(lines.map((c) => productMap[c.productId].providerId || ""))) });
+    await add("orders", { userId: user.id, items: lines.map((c) => ({ ...c, points: productMap[c.productId].points, providerId: productMap[c.productId].providerId || "", fee: feeOf(providers.find((x) => x.id === productMap[c.productId].providerId), settings) })), total, address: addr.trim(), providerIds: Array.from(new Set(lines.map((c) => productMap[c.productId].providerId || ""))) });
     for (const c of lines) {
       const lp = latest.find((x) => x.id === c.productId);
       if (lp && lp.stock != null) await saveProduct(c.productId, { stock: Math.max(0, lp.stock - c.qty) });

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useProviderMe } from "@/lib/useProviderMe";
 import { fmtDay, fmtPt, list, ymd } from "@/lib/db";
 import type { Booking, HistoryItem, Message, Order } from "@/lib/types";
-import { rateOf, revenueOf } from "@/lib/earnings";
+import { feeOf, revenueOf } from "@/lib/earnings";
 import { Loading, Screen } from "@/components/ui";
 
 const STATES = [
@@ -48,7 +48,7 @@ export default function ProviderHome() {
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const rev = revenueOf(me.id, hist, orders, app.products, rateOf(me, app.settings), monthStart);
+  const rev = revenueOf(me.id, hist, orders, app.products, feeOf(me, app.settings), monthStart);
   const earnings = rev.pay;
   const gifts = rev.gift;
   const today = ymd(now);

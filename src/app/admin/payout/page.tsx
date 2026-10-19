@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { fmtPt, list, update } from "@/lib/db";
 import type { HistoryItem, Order, Payout } from "@/lib/types";
-import { rateOf, revenueOf } from "@/lib/earnings";
+import { feeOf, revenueOf } from "@/lib/earnings";
 import { AdminShell, panel } from "@/components/AdminShell";
 
 export default function AdminPayout() {
@@ -24,8 +24,9 @@ export default function AdminPayout() {
   const month = hist.filter((h) => h.createdAt >= monthStart);
   const spent = month.filter((h) => h.points < 0);
   const total = spent.reduce((s, h) => s + Math.abs(h.points), 0);
-  const perTeller = providers.map((p) => ({ p, rate: rateOf(p, settings), rev: revenueOf(p.id, hist, orders, products, rateOf(p, settings), monthStart) }));
+  const perTeller = providers.map((p) => ({ p, rate: feeOf(p, settings), rev: revenueOf(p.id, hist, orders, products, feeOf(p, settings), monthStart) }));
   const tellerShare = perTeller.reduce((s, x) => s + x.rev.pay, 0);
+  const feeIncome = perTeller.reduce((s, x) => s + x.rev.fee, 0);
   const bought = month.filter((h) => h.kind === "buy").reduce((s, h) => s + h.points, 0);
   const cats: [string, (h: HistoryItem) => boolean][] = [
     ["ビデオ通話", (h) => h.kind === "talk" && !h.label.includes("音声")],
@@ -43,7 +44,7 @@ export default function AdminPayout() {
 
   return (
     <AdminShell title="売上・出金" sub={`${now.getFullYear()}年${now.getMonth() + 1}月`}>
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className={panel}>
           <div className="text-[13px] text-mute">今月のポイント消費(売上)</div>
           <div className="mt-1.5 text-[28px] font-bold text-gold">{fmtPt(total)}</div>
@@ -51,7 +52,12 @@ export default function AdminPayout() {
         <div className={panel}>
           <div className="text-[13px] text-mute">占い師への支払い予定</div>
           <div className="mt-1.5 text-[28px] font-bold">{fmtPt(tellerShare)}</div>
-          <div className="mt-1 text-xs text-mute">先生ごとの分配率で算出(標準 {settings.shareRate}%)</div>
+          <div className="mt-1 text-xs text-mute">売上からシステム手数料(標準 {settings.feeRate ?? 20}%)を引いて算出</div>
+        </div>
+        <div className={panel}>
+          <div className="text-[13px] text-mute">今月のシステム手数料収入</div>
+          <div className="mt-1.5 text-[28px] font-bold text-mint-hi">{fmtPt(feeIncome)}</div>
+          <div className="mt-1 text-xs text-mute">先生の売上にかかる手数料の合計</div>
         </div>
         <div className={panel}>
           <div className="text-[13px] text-mute">今月のポイント販売</div>
@@ -81,7 +87,7 @@ export default function AdminPayout() {
           <div className="mb-2.5 text-[15px] font-bold">先生ごとの今月の売上と取り分</div>
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="text-xs text-dim">
-              <tr className="border-b border-deep"><th className="py-2 font-normal">先生</th><th className="text-right font-normal">売上</th><th className="text-right font-normal">うちグッズ</th><th className="text-right font-normal">分配率</th><th className="text-right font-normal">取り分</th></tr>
+              <tr className="border-b border-deep"><th className="py-2 font-normal">先生</th><th className="text-right font-normal">売上</th><th className="text-right font-normal">うちグッズ</th><th className="text-right font-normal">手数料率</th><th className="text-right font-normal">手数料</th><th className="text-right font-normal">先生の報酬</th></tr>
             </thead>
             <tbody>
               {perTeller.map(({ p, rate, rev }) => (
@@ -89,7 +95,8 @@ export default function AdminPayout() {
                   <td className="py-2.5 font-bold">{p.name}</td>
                   <td className="text-right">{fmtPt(rev.total)}</td>
                   <td className="text-right text-lav">{fmtPt(rev.goods)}</td>
-                  <td className={`text-right ${p.shareRate != null ? "text-gold" : "text-lav"}`}>{rate}%</td>
+                  <td className={`text-right ${p.feeRate != null ? "text-gold" : "text-lav"}`}>{rate}%</td>
+                  <td className="text-right text-lav">{fmtPt(rev.fee)}</td>
                   <td className="text-right font-bold">{fmtPt(rev.pay)}</td>
                 </tr>
               ))}

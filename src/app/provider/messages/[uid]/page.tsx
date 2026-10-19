@@ -23,6 +23,7 @@ export default function ProviderThread() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [paid, setPaid] = useState(true); // このメッセージを有料(開封にポイント)にするか
+  const [amount, setAmount] = useState<string | null>(null); // このメッセージの料金(未入力ならプロフィールの標準料金)
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -49,18 +50,21 @@ export default function ProviderThread() {
 
   if (!ok || !me) return <Screen><Loading /></Screen>;
 
-  const rate = me.replyRate ?? 500;
+  const baseRate = me.replyRate ?? 500;
+  const rate = amount === null ? baseRate : Math.min(100000, Number(amount) || 0);
+  const PRESETS = Array.from(new Set([300, 500, 1000, 2000, 3000, baseRate])).sort((a, b) => a - b);
 
   // 送信取り消し。edit=true なら本文を入力欄に戻して、料金を選び直して送れるようにする
   async function retract(m: Message, edit: boolean) {
-    const q = edit ? "送信を取り消して、入力欄に戻しますか?(料金を選び直して送り直せます)" : "このメッセージの送信を取り消しますか?(お客様の画面からも消えます)";
+    const q = edit ? "送信を取り消して、入力欄に戻しますか?(料金や本文を直して送り直せます)" : "このメッセージの送信を取り消しますか?(お客様の画面からも消えます)";
     if (!window.confirm(q)) return;
     setError("");
     try {
       await retractMessage(m.id);
       if (edit) {
         setDraft(m.text);
-        setPaid(!((m.price ?? 0) > 0));
+        setPaid((m.price ?? 0) > 0);
+        if ((m.price ?? 0) > 0) setAmount(String(m.price));
         if (m.attachments?.length) setError("添付ファイルは戻せないため、もう一度選んでください");
       }
     } catch (e) {
@@ -87,7 +91,7 @@ export default function ProviderThread() {
       providerId: me.id,
       from: "provider",
       text: draft.trim(),
-      price: paid ? rate : 0,
+      price: paid && rate > 0 ? rate : 0,
       ...(attachments ? { attachments } : {}),
     });
     setDraft("");
@@ -107,12 +111,35 @@ export default function ProviderThread() {
           </div>
           <div role="radiogroup" aria-label="このメッセージの料金" className="grid grid-cols-2 gap-1 rounded-full border border-edge bg-night p-1">
             <button role="radio" aria-checked={paid} onClick={() => setPaid(true)} className={`h-9 rounded-full text-[13px] font-bold ${paid ? "bg-gold text-ink" : "text-mute"}`}>
-              有料 {fmtPt(rate)}
+              有料 {rate > 0 ? fmtPt(rate) : ""}
             </button>
             <button role="radio" aria-checked={!paid} onClick={() => setPaid(false)} className={`h-9 rounded-full text-[13px] font-bold ${!paid ? "bg-mint text-ink" : "text-mute"}`}>
               無料(連絡用)
             </button>
           </div>
+          {paid && (
+            <div className="flex flex-col gap-1.5">
+              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+                {PRESETS.map((v) => (
+                  <button key={v} onClick={() => setAmount(String(v))} className={`h-8 shrink-0 rounded-full border px-3 text-xs font-bold ${rate === v ? "border-gold bg-gold text-ink" : "border-edge text-lav"}`}>
+                    {v.toLocaleString()}pt
+                  </button>
+                ))}
+                <label className="flex h-8 shrink-0 items-center gap-1 rounded-full border border-edge pl-3 pr-2 text-xs text-lav">
+                  金額
+                  <input
+                    inputMode="numeric"
+                    aria-label="このメッセージの料金(pt)"
+                    value={amount ?? String(baseRate)}
+                    onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                    className="w-16 bg-transparent text-right font-bold text-text outline-none"
+                  />
+                  pt
+                </label>
+              </div>
+              {rate === 0 && <span className="text-[11px] text-rose">金額を入れてください(0ptなら「無料」を選んでください)</span>}
+            </div>
+          )}
           <PendingFiles files={files} onRemove={(i) => setFiles(files.filter((_, j) => j !== i))} />
           <label htmlFor="reply" className="sr-only">返信を入力</label>
           <textarea id="reply" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="返信を入力" className="resize-none rounded-[14px] border border-edge bg-night px-3.5 py-3 text-sm leading-relaxed outline-none focus:border-gold" />
@@ -121,7 +148,7 @@ export default function ProviderThread() {
             <span className="min-w-0 flex-1 text-[11px] leading-snug text-mute">
               {busy && files.length ? "添付ファイルを送っています…" : paid ? `お客様は ${fmtPt(rate)} で開封します` : "お客様はそのまま読めます(料金なし)"}
             </span>
-            <button onClick={send} disabled={busy || (!draft.trim() && !files.length)} className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
+            <button onClick={send} disabled={busy || (!draft.trim() && !files.length) || (paid && rate === 0)} className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
           </div>
           {error && <div className="text-[11px] text-rose">{error}</div>}
         </div>
@@ -175,7 +202,7 @@ export default function ProviderThread() {
               {mine && canRetract(m) && (
                 <div className="flex gap-3 text-[11px]">
                   <button onClick={() => retract(m, true)} className="text-gold underline underline-offset-2">
-                    取り消して{(m.price ?? 0) > 0 ? "無料で" : "有料で"}送り直す
+                    取り消して修正する
                   </button>
                   <button onClick={() => retract(m, false)} className="text-lav underline underline-offset-2">取り消す</button>
                 </div>

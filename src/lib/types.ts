@@ -68,7 +68,8 @@ export type HistoryItem = {
   label: string;
   detail: string;
   points: number; // +購入 / -消費
-  rate?: number; // この取引時点の先生の分配率(%)
+  rate?: number; // (旧)この取引時点の先生の分配率(%)。今は使わない
+  fee?: number; // この取引時点のシステム手数料率(%)
   createdAt: number;
 };
 
@@ -102,7 +103,7 @@ export type PalmReading = {
 export type Order = {
   id: string;
   userId: string;
-  items: { productId: string; qty: number; points?: number; providerId?: string; rate?: number }[];
+  items: { productId: string; qty: number; points?: number; providerId?: string; rate?: number; fee?: number }[];
   total: number;
   createdAt: number;
 };
@@ -112,7 +113,8 @@ export type Settings = {
   palmCost: number;
   signupBonus: number;
   prepMinutes: number;
-  shareRate: number; // 占い師への分配率の標準値(%)。占い師ごとの設定がなければこれを使う
+  shareRate: number; // (旧)占い師への分配率。今は使わない
+  feeRate: number; // システム手数料の標準(%)。先生の報酬は 売上 −手数料
   packs: { points: number; price: number }[];
 };
 
@@ -121,7 +123,8 @@ export const defaultSettings: Settings = {
   palmCost: 200,
   signupBonus: 800,
   prepMinutes: 2,
-  shareRate: 20,
+  shareRate: 80,
+  feeRate: 20,
   packs: [
     { points: 1000, price: 1000 },
     { points: 3000, price: 2800 },

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useProviderMe } from "@/lib/useProviderMe";
 import { add, fmtDate, fmtPt, list } from "@/lib/db";
 import type { Booking, HistoryItem, Order, Payout } from "@/lib/types";
-import { rateOf, revenueOf } from "@/lib/earnings";
+import { feeOf, revenueOf } from "@/lib/earnings";
 import { IBank } from "@/components/icons";
 import { BackHeader, Loading, Screen, btnGold } from "@/components/ui";
 
@@ -26,8 +26,8 @@ export default function Earnings() {
   }, [me]);
 
   if (!ok || !me) return <Screen><Loading /></Screen>;
-  const rate = rateOf(me, app.settings);
-  const rev = (from = 0, to = Infinity) => revenueOf(me.id, hist, orders, app.products, rate, from, to);
+  const fee = feeOf(me, app.settings);
+  const rev = (from = 0, to = Infinity) => revenueOf(me.id, hist, orders, app.products, fee, from, to);
   const now = new Date();
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -65,8 +65,13 @@ export default function Earnings() {
     >
       <BackHeader title="報酬・出金" href="/provider" />
       <div className="mx-4 rounded-[20px] border border-line bg-card p-[18px]">
-        <div className="text-xs text-mute">今月の報酬見込み(あなたの分配率 {rate}%)</div>
+        <div className="text-xs text-mute">今月の報酬見込み</div>
         <div className="mt-1 text-[32px] font-bold text-gold">{fmtPt(total)}</div>
+        <div className="mt-3 flex flex-col gap-1.5 rounded-xl bg-night px-3.5 py-3 text-[13px]">
+          <div className="flex justify-between"><span className="text-mute">今月の売上</span><span>{fmtPt(cur.total)}</span></div>
+          <div className="flex justify-between"><span className="text-mute">システム手数料({fee}%)</span><span className="text-rose">−{fmtPt(cur.fee)}</span></div>
+          <div className="flex justify-between border-t border-deep pt-1.5 font-bold"><span>あなたの報酬</span><span className="text-gold">{fmtPt(cur.pay)}</span></div>
+        </div>
         <div className="mt-3.5 flex h-24 items-end gap-3">
           {months.map((m, i) => (
             <div key={m.label} className="flex flex-1 flex-col items-center gap-1.5">
@@ -85,12 +90,16 @@ export default function Earnings() {
           ["メッセージ", cur.msg],
           ["開運グッズ", cur.goods],
           ["いただいた感謝", cur.gift],
-        ].map(([k, v], i) => (
-          <div key={k as string} className={`flex h-[46px] items-center justify-between px-4 text-sm ${i < 4 ? "border-b border-deep" : ""}`}>
+        ].map(([k, v]) => (
+          <div key={k as string} className="grid h-[46px] grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-deep px-4 text-sm">
             <span>{k}</span>
-            <span className={`font-bold ${i === 4 ? "text-gold" : ""}`}>{fmtPt(v as number)}</span>
+            <span className="text-right text-[11px] text-mute">手数料 −{fmtPt(Math.round(((v as number) * fee) / 100))}</span>
+            <span className="min-w-[72px] text-right font-bold">{fmtPt(v as number)}</span>
           </div>
         ))}
+        <div className="flex items-center justify-between px-4 py-3 text-[11px] leading-relaxed text-dim">
+          <span>表示は売上(お客様が使ったポイント)です。報酬は売上からシステム手数料{fee}%を引いた額で、1pt=1円で出金できます。</span>
+        </div>
       </div>
 
       <div className="mx-4 mt-4 flex items-center gap-3 rounded-2xl bg-card px-4 py-3">

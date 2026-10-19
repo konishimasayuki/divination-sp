@@ -20,7 +20,8 @@ export type Provider = {
   careerYears?: number;
   acceptNow?: boolean;
   bankInfo?: string;
-  shareRate?: number | null; // この先生の分配率(%)。未設定なら運営の標準値
+  shareRate?: number | null; // (旧)この先生の分配率。今は使わない
+  feeRate?: number | null; // この先生のシステム手数料(%)。未設定なら運営の標準値
   // 曜日(0=日〜6=土) → 受付枠インデックス(0=18:00 〜 15=25:30)
   schedule?: Record<string, number[]>;
   // 日付ごとの受付時間(新方式)。"YYYY-MM-DD" → ["09:00", "09:30", ...](0:00〜23:30、30分刻み)
