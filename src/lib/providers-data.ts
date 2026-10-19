@@ -23,6 +23,9 @@ export type Provider = {
   shareRate?: number | null; // この先生の分配率(%)。未設定なら運営の標準値
   // 曜日(0=日〜6=土) → 受付枠インデックス(0=18:00 〜 15=25:30)
   schedule?: Record<string, number[]>;
+  // 日付ごとの受付時間(新方式)。"YYYY-MM-DD" → ["09:00", "09:30", ...](0:00〜23:30、30分刻み)
+  // 一度でも新しい設定画面で保存すると、こちらだけが使われる
+  dates?: Record<string, string[]>;
 };
 
 export const DEFAULT_REPLY_RATE = 500;
