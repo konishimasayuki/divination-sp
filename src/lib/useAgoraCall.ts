@@ -25,11 +25,15 @@ export function useAgoraCall({ channel, uid, audioOnly = false, enabled = true }
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(!audioOnly);
   const [connectedAt, setConnectedAt] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0); // 再接続のたびに増やして接続し直す
 
   useEffect(() => {
     if (!enabled || !channel) return;
     let cancelled = false;
     setStatus("connecting");
+    setError("");
+    setRemoteJoined(false);
+    setRemoteHasVideo(false);
 
     (async () => {
       try {
@@ -54,6 +58,14 @@ export function useAgoraCall({ channel, uid, audioOnly = false, enabled = true }
         });
         client.on("user-unpublished", (_u, mediaType) => {
           if (mediaType === "video") setRemoteHasVideo(false);
+        });
+        // 自分側の通信が切れたとき(電波・アプリ切替など)は再接続ボタンを出す
+        client.on("connection-state-change", (cur, _prev, reason) => {
+          if (cur === "DISCONNECTED" && reason !== "LEAVE" && !cancelled) {
+            setStatus("error");
+            setError("通信が切れました。時間内なら再接続できます");
+            setRemoteJoined(false);
+          }
         });
 
         const res = await fetch(`/api/agora-token?channel=${encodeURIComponent(channel)}&uid=${uid}`);
@@ -102,7 +114,7 @@ export function useAgoraCall({ channel, uid, audioOnly = false, enabled = true }
       }
       clientRef.current = null;
     };
-  }, [channel, uid, audioOnly, enabled]);
+  }, [channel, uid, audioOnly, enabled, attempt]);
 
   const toggleMic = useCallback(() => {
     const t = audioRef.current;
@@ -149,9 +161,15 @@ export function useAgoraCall({ channel, uid, audioOnly = false, enabled = true }
     }
   }, []);
 
+  const reconnect = useCallback(() => {
+    setMicOn(true);
+    setCamOn(!audioOnly);
+    setAttempt((a) => a + 1);
+  }, [audioOnly]);
+
   return {
     localRef, remoteRef, status, error, remoteJoined, remoteHasVideo,
-    micOn, camOn, connectedAt, toggleMic, toggleCam, switchCamera, togglePip,
+    micOn, camOn, connectedAt, toggleMic, toggleCam, switchCamera, togglePip, reconnect,
     canSwitch: () => camerasRef.current.length > 1,
   };
 }

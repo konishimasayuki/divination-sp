@@ -7,6 +7,9 @@ import { useApp, useGuard } from "@/lib/store";
 import { add, fmtPt, list, threadIdOf, update, zodiacOf } from "@/lib/db";
 import type { Booking, Message } from "@/lib/types";
 import { ICalendar, ISend } from "@/components/icons";
+import { AttachButton, AttachmentList, PendingFiles } from "@/components/Attachments";
+import { uploadAttachment } from "@/lib/attach";
+import { callWindow } from "@/lib/callWindow";
 import { BackHeader, Loading, Screen } from "@/components/ui";
 
 function hm(ts: number) {
@@ -22,6 +25,7 @@ export default function Thread() {
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [typing, setTyping] = useState(false);
   const [error, setError] = useState("");
@@ -70,11 +74,20 @@ export default function Thread() {
   async function send() {
     if (!user || !p) return;
     const body = text.trim();
-    if (!body) return;
+    if (!body && !files.length) return;
     setBusy(true);
     setError("");
-    const sent = await add<Message>("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "user", text: body });
+    let attachments;
+    try {
+      attachments = files.length ? await Promise.all(files.map((f) => uploadAttachment(f, tid))) : undefined;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "添付ファイルを送れませんでした");
+      setBusy(false);
+      return;
+    }
+    const sent = await add<Message>("messages", { threadId: tid, userId: user.id, providerId: p.id, from: "user", text: body, ...(attachments ? { attachments } : {}) });
     setText("");
+    setFiles([]);
     const next = [...msgs, sent];
     setMsgs(next);
     setBusy(false);
@@ -89,7 +102,7 @@ export default function Thread() {
             threadId: tid,
             persona: { name: p.name, tag: p.tag, bio: p.bio },
             profile: { name: user.name, birthday: user.birthday, zodiac: zodiacOf(user.birthday), bloodType: user.bloodType },
-            history: next.map((m) => ({ from: m.from, text: m.text })),
+            history: next.map((m) => ({ from: m.from, text: m.text || (m.attachments?.length ? "(写真やファイルを送りました)" : "") })),
           }),
         });
         const data = await res.json();
@@ -109,7 +122,9 @@ export default function Thread() {
     <Screen
       bottom={
         <div className="flex flex-col gap-1.5">
+          <PendingFiles files={files} onRemove={(i) => setFiles(files.filter((_, j) => j !== i))} />
           <div className="flex items-end gap-2">
+            <AttachButton disabled={busy} onPick={(f) => setFiles([...files, ...f].slice(0, 10))} />
             <label htmlFor="msg" className="sr-only">メッセージを入力</label>
             <textarea
               id="msg"
@@ -119,12 +134,12 @@ export default function Thread() {
               placeholder="メッセージを入力"
               className="max-h-28 min-h-11 flex-1 resize-none rounded-[22px] border border-edge bg-night px-3.5 py-2.5 text-sm leading-relaxed outline-none focus:border-gold"
             />
-            <button onClick={send} disabled={busy || !text.trim()} aria-label="送信" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold text-ink disabled:opacity-40">
+            <button onClick={send} disabled={busy || (!text.trim() && !files.length)} aria-label="送信" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold text-ink disabled:opacity-40">
               <ISend />
             </button>
           </div>
           <div className="pl-3.5 text-[11px] text-mute">
-            送信は無料です。先生の返信は1通{fmtPt(replyRate)}で開封できます(保有 {fmtPt(user.points)})
+            {busy && files.length ? "添付ファイルを送っています…" : <>送信は無料です。有料の返信は1通{fmtPt(replyRate)}で開封できます(保有 {fmtPt(user.points)})</>}
           </div>
           {error && <div className="pl-3.5 text-[11px] text-rose">{error}</div>}
         </div>
@@ -135,7 +150,7 @@ export default function Thread() {
           <img src={p.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
           <div className="ml-1.5 min-w-0">
             <div className="truncate text-[15px] font-bold">{p.name}</div>
-            <div className="text-[11px] text-mute">送信無料 ・ 返信の開封 {fmtPt(replyRate)} / 1通</div>
+            <div className="text-[11px] text-mute">送信無料 ・ 有料の返信は {fmtPt(replyRate)} / 1通</div>
           </div>
         </BackHeader>
       </div>
@@ -158,13 +173,17 @@ export default function Thread() {
                   ご予約が確定しました
                 </div>
                 <div className="text-[13px] leading-relaxed text-soft">{m.text}</div>
-                {b && b.status === "reserved" ? (
+                {b && b.status === "reserved" && !callWindow(b, settings.prepMinutes).expired ? (
                   <>
                     <Link href={`/call/${b.id}`} className="flex h-12 items-center justify-center rounded-xl bg-gold text-[15px] font-bold text-ink">
-                      入室する
+                      {callWindow(b, settings.prepMinutes).started ? `鑑定に戻る(残り約${callWindow(b, settings.prepMinutes).leftMin}分)` : "入室する"}
                     </Link>
-                    <div className="text-center text-[11px] text-mute">時間になったらこちらから入室してください</div>
+                    <div className="text-center text-[11px] text-mute">
+                      {callWindow(b, settings.prepMinutes).started ? "通話が途切れても、時間内ならここから戻れます" : "時間になったらこちらから入室してください"}
+                    </div>
                   </>
+                ) : b && b.status === "reserved" ? (
+                  <div className="text-center text-xs text-mute">鑑定時間が終了しました</div>
                 ) : (
                   <div className="text-center text-xs text-mute">{b?.status === "done" ? "この鑑定は終了しました" : ""}</div>
                 )}
@@ -194,10 +213,13 @@ export default function Thread() {
             );
           }
           return (
-            <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-              <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>
-                {m.text}
-              </div>
+            <div key={m.id} className={`flex flex-col gap-1.5 ${mine ? "items-end" : "items-start"}`}>
+              {m.text && (
+                <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>
+                  {m.text}
+                </div>
+              )}
+              {m.attachments?.length ? <AttachmentList items={m.attachments} mine={mine} /> : null}
               <div className="mt-1 text-[10px] text-dim">
                 {hm(m.createdAt)}
                 {!mine && m.unlocked && m.price ? ` ・ ${fmtPt(m.price)}で開封` : ""}

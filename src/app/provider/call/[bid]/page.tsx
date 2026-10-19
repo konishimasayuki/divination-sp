@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useProviderMe } from "@/lib/useProviderMe";
 import { fmtBirth, list, update, zodiacOf } from "@/lib/db";
 import type { Booking, User } from "@/lib/types";
+import { callWindow } from "@/lib/callWindow";
 import { useAgoraCall, useCountdown } from "@/lib/useAgoraCall";
 import { IEnd, IMic, IMicOff, ISwitch, IVideo } from "@/components/icons";
 import { Loading } from "@/components/ui";
@@ -30,6 +31,7 @@ export default function ProviderCall() {
   const [prevMemo, setPrevMemo] = useState("");
   const [saved, setSaved] = useState(false);
   const [camNote, setCamNote] = useState("");
+  const [expiredAtLoad, setExpiredAtLoad] = useState(false);
 
   useEffect(() => {
     list<Booking>("bookings", { id: bid }).then(async (b) => {
@@ -37,17 +39,31 @@ export default function ProviderCall() {
       if (!bk) return;
       setBooking(bk);
       setMemo(bk.memo ?? "");
+      if (bk.status === "reserved" && callWindow(bk, app.settings.prepMinutes).expired) setExpiredAtLoad(true);
       const [u, all] = await Promise.all([list<User>("users", { id: bk.userId }), list<Booking>("bookings", { userId: bk.userId, providerId: bk.providerId })]);
       setClient(u[0] ?? null);
       setVisits(all.length);
       const prev = all.filter((x) => x.id !== bk.id && x.memo).sort((a, c) => c.createdAt - a.createdAt)[0];
       setPrevMemo(prev?.memo ?? "");
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bid]);
 
   const audioOnly = booking?.method === "voice";
-  const call = useAgoraCall({ channel: booking?.channel ?? "", uid: 2, audioOnly, enabled: !!booking && booking.status === "reserved" });
-  const timer = useCountdown(call.remoteJoined ? call.connectedAt : null, (booking?.minutes ?? 0) * 60 + app.settings.prepMinutes * 60);
+  const call = useAgoraCall({ channel: booking?.channel ?? "", uid: 2, audioOnly, enabled: !!booking && booking.status === "reserved" && !expiredAtLoad });
+
+  // 双方が初めてつながった時刻を予約に記録(どちらが先に記録しても同じ時刻を使う)
+  useEffect(() => {
+    if (!call.remoteJoined || !booking || booking.startedAt) return;
+    list<Booking>("bookings", { id: booking.id }).then(async (b) => {
+      const startedAt = b[0]?.startedAt ?? Date.now();
+      if (!b[0]?.startedAt) await update("bookings", booking.id, { startedAt });
+      setBooking((cur) => (cur ? { ...cur, startedAt } : cur));
+    });
+  }, [call.remoteJoined, booking]);
+
+  const timer = useCountdown(booking?.startedAt ?? null, (booking?.minutes ?? 0) * 60 + app.settings.prepMinutes * 60);
+  const started = !!booking?.startedAt;
 
   if (!ok || !me) return <Loading />;
   if (!booking) return <div className="h-[100dvh] bg-abyss"><Loading label="予約を読み込んでいます" /></div>;
@@ -61,13 +77,22 @@ export default function ProviderCall() {
 
   async function end() {
     if (!booking || !me) return;
+    if (timer.left > 0 && !expiredAtLoad && booking.status === "reserved" && !window.confirm("終了すると、時間が残っていてもお客様は再入室できません。鑑定を終了しますか?")) return;
     await update("bookings", booking.id, { status: "done", memo });
     await app.saveProvider(me.id, { status: "available" });
     router.replace("/provider");
   }
 
   const name = booking.userName;
-  const statusText = call.status === "error" ? call.error : call.status !== "connected" ? "接続しています…" : !call.remoteJoined ? `${name}さんの入室を待っています` : !call.remoteHasVideo ? `${name}さん ・ カメラOFF(顔出しなし)` : "";
+  const statusText = expiredAtLoad
+    ? "鑑定時間が終了しました。終了ボタンで閉じてください"
+    : call.status === "error"
+      ? call.error
+      : call.status !== "connected"
+        ? started ? "鑑定に戻っています…" : "接続しています…"
+        : !call.remoteJoined
+          ? started ? `${name}さんの接続が切れました。時間内なら戻ってこられます` : `${name}さんの入室を待っています`
+          : !call.remoteHasVideo ? `${name}さん ・ カメラOFF(顔出しなし)` : "";
 
   return (
     <div className="flex h-[100dvh] justify-center bg-abyss">
@@ -78,12 +103,15 @@ export default function ProviderCall() {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5">
               <span className="flex h-24 w-24 items-center justify-center rounded-full bg-deep font-mincho text-4xl font-bold text-lav">{name.charAt(0)}</span>
               <span className="px-6 text-center text-[13px] text-mute">{statusText}</span>
+              {call.status === "error" && !expiredAtLoad && timer.left > 0 && (
+                <button onClick={call.reconnect} className="mt-1 flex h-10 items-center rounded-full bg-gold px-5 text-sm font-bold text-ink">再接続する</button>
+              )}
             </div>
           )}
           <div className="absolute left-4 right-4 flex items-center justify-between" style={{ top: "calc(env(safe-area-inset-top) + 12px)" }}>
             <span className="flex h-[30px] items-center gap-1.5 rounded-full bg-night px-3 text-xs">
               <span className={`h-[7px] w-[7px] rounded-full ${call.remoteJoined ? "bg-rose" : "bg-faint"}`} />
-              {call.remoteJoined ? `鑑定中 ${timer.elapsedText}` : "待機中"}
+              {call.remoteJoined ? `鑑定中 ${timer.elapsedText}` : started ? "再接続待ち" : "待機中"}
             </span>
             <span className="flex h-[30px] items-center rounded-full bg-night px-3 text-xs font-bold text-gold">残り {timer.leftText}</span>
           </div>

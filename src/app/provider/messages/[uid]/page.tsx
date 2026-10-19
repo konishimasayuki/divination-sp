@@ -7,17 +7,23 @@ import { useProviderMe } from "@/lib/useProviderMe";
 import { add, fmtPt, list, threadIdOf, zodiacOf } from "@/lib/db";
 import type { Booking, Message, User } from "@/lib/types";
 import { BackHeader, Loading, Screen } from "@/components/ui";
+import { AttachButton, AttachmentList, PendingFiles } from "@/components/Attachments";
+import { uploadAttachment } from "@/lib/attach";
+import { callWindow } from "@/lib/callWindow";
 
-const PHRASES = ["ご相談ありがとうございます。", "カードで見てみますね。", "通話でじっくりお話ししませんか?"];
+const PHRASES = ["ご相談ありがとうございます。", "カードで見てみますね。", "通話でじっくりお話ししませんか?", "ご都合のよい日時を教えてください。"];
 
 export default function ProviderThread() {
-  const { ok, me } = useProviderMe();
+  const { ok, me, app } = useProviderMe();
   const { uid } = useParams<{ uid: string }>();
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [client, setClient] = useState<User | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [paid, setPaid] = useState(true); // このメッセージを有料(開封にポイント)にするか
+  const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
   const tid = me ? threadIdOf(uid, me.id) : "";
 
@@ -42,11 +48,31 @@ export default function ProviderThread() {
 
   if (!ok || !me) return <Screen><Loading /></Screen>;
 
+  const rate = me.replyRate ?? 500;
+
   async function send() {
-    if (!me || !draft.trim()) return;
+    if (!me || (!draft.trim() && !files.length)) return;
     setBusy(true);
-    await add("messages", { threadId: tid, userId: uid, providerId: me.id, from: "provider", text: draft.trim(), price: me.replyRate ?? 500 });
+    setError("");
+    let attachments;
+    try {
+      attachments = files.length ? await Promise.all(files.map((f) => uploadAttachment(f, tid))) : undefined;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "添付ファイルを送れませんでした");
+      setBusy(false);
+      return;
+    }
+    await add("messages", {
+      threadId: tid,
+      userId: uid,
+      providerId: me.id,
+      from: "provider",
+      text: draft.trim(),
+      price: paid ? rate : 0,
+      ...(attachments ? { attachments } : {}),
+    });
     setDraft("");
+    setFiles([]);
     await load();
     setBusy(false);
   }
@@ -60,12 +86,25 @@ export default function ProviderThread() {
               <button key={p} onClick={() => setDraft(draft + p)} className="h-8 shrink-0 rounded-full border border-edge px-3 text-xs text-lav">{p}</button>
             ))}
           </div>
+          <div role="radiogroup" aria-label="このメッセージの料金" className="grid grid-cols-2 gap-1 rounded-full border border-edge bg-night p-1">
+            <button role="radio" aria-checked={paid} onClick={() => setPaid(true)} className={`h-9 rounded-full text-[13px] font-bold ${paid ? "bg-gold text-ink" : "text-mute"}`}>
+              有料 {fmtPt(rate)}
+            </button>
+            <button role="radio" aria-checked={!paid} onClick={() => setPaid(false)} className={`h-9 rounded-full text-[13px] font-bold ${!paid ? "bg-mint text-ink" : "text-mute"}`}>
+              無料(連絡用)
+            </button>
+          </div>
+          <PendingFiles files={files} onRemove={(i) => setFiles(files.filter((_, j) => j !== i))} />
           <label htmlFor="reply" className="sr-only">返信を入力</label>
           <textarea id="reply" rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="返信を入力" className="resize-none rounded-[14px] border border-edge bg-night px-3.5 py-3 text-sm leading-relaxed outline-none focus:border-gold" />
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] leading-snug text-mute">お客様は {fmtPt(me.replyRate ?? 500)} で開封します(料金はプロフィール編集で変更) ・ {draft.length}文字</span>
-            <button onClick={send} disabled={busy || !draft.trim()} className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
+          <div className="flex items-center justify-between gap-2.5">
+            <AttachButton disabled={busy} onPick={(f) => setFiles([...files, ...f].slice(0, 10))} />
+            <span className="min-w-0 flex-1 text-[11px] leading-snug text-mute">
+              {busy && files.length ? "添付ファイルを送っています…" : paid ? `お客様は ${fmtPt(rate)} で開封します` : "お客様はそのまま読めます(料金なし)"}
+            </span>
+            <button onClick={send} disabled={busy || (!draft.trim() && !files.length)} className="flex h-11 shrink-0 items-center whitespace-nowrap rounded-full bg-gold px-[22px] text-sm font-bold text-ink disabled:opacity-40">送信する</button>
           </div>
+          {error && <div className="text-[11px] text-rose">{error}</div>}
         </div>
       }
     >
@@ -88,18 +127,24 @@ export default function ProviderThread() {
               <div key={m.id} className="rounded-[18px] border border-gold bg-card p-3.5">
                 <div className="text-xs font-bold text-gold">予約が入りました</div>
                 <div className="mt-1 text-[13px] text-soft">{m.text}</div>
-                {b?.status === "reserved" && (
-                  <Link href={`/provider/call/${b.id}`} className="mt-2.5 flex h-11 items-center justify-center rounded-xl bg-gold text-sm font-bold text-ink">入室する</Link>
+                {b?.status === "reserved" && !callWindow(b, app.settings.prepMinutes).expired && (
+                  <Link href={`/provider/call/${b.id}`} className="mt-2.5 flex h-11 items-center justify-center rounded-xl bg-gold text-sm font-bold text-ink">
+                    {callWindow(b, app.settings.prepMinutes).started ? `鑑定に戻る(残り約${callWindow(b, app.settings.prepMinutes).leftMin}分)` : "入室する"}
+                  </Link>
                 )}
+                {b?.status === "reserved" && callWindow(b, app.settings.prepMinutes).expired && <div className="mt-2 text-center text-xs text-mute">鑑定時間が終了しました</div>}
               </div>
             );
           }
           const mine = m.from === "provider";
           return (
-            <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
-              <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>{m.text}</div>
+            <div key={m.id} className={`flex flex-col gap-1.5 ${mine ? "items-end" : "items-start"}`}>
+              {m.text && <div className={`max-w-[80%] whitespace-pre-wrap px-3.5 py-2.5 text-sm leading-[1.7] ${mine ? "rounded-[18px_18px_4px_18px] bg-gold text-ink" : "rounded-[18px_18px_18px_4px] bg-deep"}`}>{m.text}</div>}
+              {m.attachments?.length ? <AttachmentList items={m.attachments} mine={mine} /> : null}
               {mine && (m.price ?? 0) > 0 ? (
-                <div className={`mt-1 text-[10px] ${m.unlocked ? "text-mint-hi" : "text-dim"}`}>{m.unlocked ? `お客様が開封済み ・ ${fmtPt(m.price ?? 0)}` : `未開封 ・ 開封で ${fmtPt(m.price ?? 0)}`}</div>
+                <div className={`text-[10px] ${m.unlocked ? "text-mint-hi" : "text-dim"}`}>{m.unlocked ? `お客様が開封済み ・ ${fmtPt(m.price ?? 0)}` : `未開封 ・ 開封で ${fmtPt(m.price ?? 0)}`}</div>
+              ) : mine ? (
+                <div className="text-[10px] text-dim">無料で送信</div>
               ) : null}
             </div>
           );

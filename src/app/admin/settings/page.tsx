@@ -13,6 +13,7 @@ const SERVICES = [
   { key: "agora", name: "Agora", desc: "ビデオ・音声通話", envs: ["NEXT_PUBLIC_AGORA_APP_ID", "AGORA_APP_CERTIFICATE"] },
   { key: "claude", name: "Claude API", desc: "AI手相・AI占い師", envs: ["ANTHROPIC_API_KEY"] },
   { key: "upstash", name: "Upstash", desc: "会員・予約・履歴の保存", envs: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"] },
+  { key: "blob", name: "Vercel Blob", desc: "メッセージの写真・動画・ファイル", envs: ["BLOB_READ_WRITE_TOKEN"] },
 ];
 
 export default function AdminSettings() {
@@ -33,7 +34,7 @@ export default function AdminSettings() {
   return (
     <AdminShell title="API・料金設定">
       <div className="mb-3 text-[15px] font-bold">外部サービスの接続状態</div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {SERVICES.map((s) => {
           const ok = status?.[s.key];
           return (

@@ -29,7 +29,16 @@ export type Booking = {
   status: "reserved" | "done" | "canceled";
   note?: string;
   memo?: string;
+  startedAt?: number; // 双方がつながって鑑定が始まった時刻。途切れてもこの時刻から数えた時間内なら再入室できる
   createdAt: number;
+};
+
+export type Attachment = {
+  url: string;
+  name: string;
+  type: string; // MIMEタイプ
+  size: number;
+  kind: "image" | "video" | "file";
 };
 
 export type Message = {
@@ -39,6 +48,7 @@ export type Message = {
   providerId: string;
   from: "user" | "provider" | "system";
   text: string;
+  attachments?: Attachment[]; // 写真・動画・ファイル
   bookingId?: string;
   cost?: number;
   price?: number; // 先生の返信を開封する料金(0・未設定は無料で表示)

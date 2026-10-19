@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
     let result = items.filter((it) => filters.every(([k, v]) => String(it[k]) === v));
     if (name === "messages" && !raw) {
       // 開封前の先生の返信は本文を送らない
-      result = result.map((m) => (m.from === "provider" && Number(m.price) > 0 && !m.unlocked ? { ...m, text: "", locked: true } : m));
+      result = result.map((m) => (m.from === "provider" && Number(m.price) > 0 && !m.unlocked ? { ...m, text: "", attachments: undefined, locked: true } : m));
     }
     return NextResponse.json({ items: result });
   } catch (e) {

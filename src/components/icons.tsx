@@ -105,3 +105,9 @@ export const IBank = ({ size, className }: P) => (
 export const IMenu = ({ size = 22, className }: P) => (
   <svg {...base(size)} strokeWidth={2} className={className}><path d="M4 7h16M4 12h16M4 17h16" /></svg>
 );
+export const IClip = ({ size = 22, className, strokeWidth = 1.8 }: P) => (
+  <svg {...base(size)} strokeWidth={strokeWidth} className={className}><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9" /></svg>
+);
+export const IFile = ({ size = 22, className, strokeWidth = 1.6 }: P) => (
+  <svg {...base(size)} strokeWidth={strokeWidth} className={className}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
+);

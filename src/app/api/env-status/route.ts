@@ -8,6 +8,7 @@ export async function GET() {
     paypayTest: e.PAYPAY_ENV !== "production",
     agora: !!(e.NEXT_PUBLIC_AGORA_APP_ID && e.AGORA_APP_CERTIFICATE),
     claude: !!e.ANTHROPIC_API_KEY,
+    blob: !!e.BLOB_READ_WRITE_TOKEN,
     upstash: !!(e.UPSTASH_REDIS_REST_URL && e.UPSTASH_REDIS_REST_TOKEN),
   });
 }
