@@ -1,39 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useApp, useGuard } from "@/lib/store";
 import { fmtPt } from "@/lib/db";
-import { ICardPay } from "@/components/icons";
 import { BackHeader, Loading, Screen, btnGold } from "@/components/ui";
 
 export default function Points() {
   const ok = useGuard("user");
-  const router = useRouter();
-  const { user, settings, gain } = useApp();
+  const { user, settings } = useApp();
   const [sel, setSel] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState<boolean | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/env-status").then((r) => r.json()).then((s) => setReady(!!s.paypay && !!s.upstash)).catch(() => setReady(false));
+  }, []);
   if (!ok || !user) return <Screen><Loading /></Screen>;
   const packs = settings.packs;
   const cur = packs[Math.min(sel, packs.length - 1)];
 
+  // PayPayの支払いページへ移動。支払い後は /points/complete に戻り、そこでポイントが付与される
   async function buy() {
-    if (!cur) return;
+    if (!cur || !user) return;
     setBusy(true);
-    // TODO: Stripe Checkout 接続後は決済完了(Webhook)でポイントを付与する
-    await gain(cur.points, { kind: "buy", label: `ポイント購入 ${fmtPt(cur.points)}`, detail: `¥${cur.price.toLocaleString()}(テスト決済)` });
-    setBusy(false);
-    router.back();
+    setError("");
+    try {
+      const res = await fetch("/api/paypay/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, pack: Math.min(sel, packs.length - 1) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "PayPay決済を開始できませんでした");
+      window.location.href = data.url;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PayPay決済を開始できませんでした");
+      setBusy(false);
+    }
   }
 
   return (
     <Screen
       bottom={
         <div className="flex flex-col gap-2">
-          <button onClick={buy} disabled={busy} className={`${btnGold} w-full`}>
-            {busy ? "処理しています" : `¥${cur?.price.toLocaleString()} で購入する`}
+          {error && <p className="text-center text-xs text-rose">{error}</p>}
+          <button onClick={buy} disabled={busy || !ready} className={`${btnGold} w-full`}>
+            {busy ? "PayPayへ移動しています" : `PayPayで ¥${cur?.price.toLocaleString()} を支払う`}
           </button>
-          <div className="text-center text-[11px] text-dim">現在はテスト決済です(Stripe接続後に実際の決済になります)</div>
+          <div className="text-center text-[11px] text-dim">
+            {ready === false ? "PayPay決済は現在準備中です" : "PayPayアプリまたはPayPayの画面でお支払いいただけます"}
+          </div>
         </div>
       }
     >
@@ -72,9 +89,10 @@ export default function Points() {
       </div>
 
       <div className="mx-5 mb-2.5 mt-[22px] text-[13px] font-medium text-lav">お支払い方法</div>
-      <div className="mx-4 flex h-14 items-center gap-3 rounded-2xl border border-line bg-card px-4 pb-0">
-        <ICardPay size={24} className="text-gold" />
-        <span className="flex-1 text-sm">クレジットカード(Stripe)</span>
+      <div className="mx-4 mb-6 flex h-14 items-center gap-3 rounded-2xl border border-gold bg-deep px-4">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FF0033] text-[11px] font-bold text-white">P</span>
+        <span className="flex-1 text-sm font-bold">PayPay</span>
+        <span className="text-[11px] text-mute">お支払いはPayPayのみ</span>
       </div>
     </Screen>
   );

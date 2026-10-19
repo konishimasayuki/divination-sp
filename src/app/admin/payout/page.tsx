@@ -56,7 +56,7 @@ export default function AdminPayout() {
         <div className={panel}>
           <div className="text-[13px] text-mute">今月のポイント販売</div>
           <div className="mt-1.5 text-[28px] font-bold">{fmtPt(bought)}</div>
-          <div className="mt-1 text-xs text-mute">Stripe決済手数料は別途</div>
+          <div className="mt-1 text-xs text-mute">PayPay決済手数料は別途</div>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export default function AdminPayout() {
               ))}
             </tbody>
           </table>
-          <p className="mt-2.5 text-xs text-dim">承認後の振込は現在は手動です(Stripe Connectでの自動送金は今後対応)。</p>
+          <p className="mt-2.5 text-xs text-dim">承認後の振込は現在は手動です。</p>
         </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ type Status = Record<string, boolean>;
 const fi = "h-10 w-full rounded-[10px] border border-edge bg-night px-3 text-sm outline-none focus:border-gold";
 
 const SERVICES = [
-  { key: "stripe", name: "Stripe", desc: "ポイント購入の決済", envs: ["STRIPE_SECRET_KEY", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"] },
+  { key: "paypay", name: "PayPay", desc: "ポイント購入の決済(PAYPAY_ENV=production で本番)", envs: ["PAYPAY_API_KEY", "PAYPAY_API_SECRET", "PAYPAY_MERCHANT_ID", "PAYPAY_ENV"] },
   { key: "agora", name: "Agora", desc: "ビデオ・音声通話", envs: ["NEXT_PUBLIC_AGORA_APP_ID", "AGORA_APP_CERTIFICATE"] },
   { key: "claude", name: "Claude API", desc: "AI手相・AI占い師", envs: ["ANTHROPIC_API_KEY"] },
   { key: "upstash", name: "Upstash", desc: "会員・予約・履歴の保存", envs: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"] },
@@ -41,7 +41,7 @@ export default function AdminSettings() {
               <div className="flex items-center justify-between">
                 <span className="text-[15px] font-bold">{s.name}</span>
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] ${status === null ? "bg-deep text-mute" : ok ? "bg-[#1F3A33] text-mint-hi" : "bg-[#3A1C24] text-[#F0A9B4]"}`}>
-                  {status === null ? "確認中" : ok ? (s.key === "stripe" && status.stripeTest ? "テストモード" : "接続済み") : "未設定"}
+                  {status === null ? "確認中" : ok ? (s.key === "paypay" && status.paypayTest ? "テストモード" : "接続済み") : "未設定"}
                 </span>
               </div>
               <div className="text-xs text-mute">{s.desc}</div>
