@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEATURES } from "@/lib/features";
+import ComingSoon from "@/components/ComingSoon";
 import { useApp, useGuard } from "@/lib/store";
 import { list } from "@/lib/db";
 import type { Product } from "@/lib/products";
 import { add, fmtPt } from "@/lib/db";
 import { BackHeader, Loading, Screen } from "@/components/ui";
 
-export default function Cart() {
+function Cart() {
   const ok = useGuard("user");
   const router = useRouter();
   const { user, cart, setCartQty, clearCart, spend, saveUser, products, saveProduct, refreshProducts, providers, settings } = useApp();
@@ -121,4 +123,9 @@ export default function Cart() {
       )}
     </Screen>
   );
+}
+
+// FEATURES.goods が false の間は準備中画面を表示
+export default function Page() {
+  return FEATURES.goods ? <Cart /> : <ComingSoon feature="goods" />;
 }

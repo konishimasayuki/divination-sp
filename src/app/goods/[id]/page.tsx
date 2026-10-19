@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { FEATURES } from "@/lib/features";
+import ComingSoon from "@/components/ComingSoon";
 import { useApp, useGuard } from "@/lib/store";
 import { fmtPt } from "@/lib/db";
 import { IBack, ICart } from "@/components/icons";
 import { Loading, Screen } from "@/components/ui";
 
-export default function GoodsDetail() {
+function GoodsDetail() {
   const ok = useGuard("user");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -74,4 +76,9 @@ export default function GoodsDetail() {
       </div>
     </Screen>
   );
+}
+
+// FEATURES.goods が false の間は準備中画面を表示
+export default function Page() {
+  return FEATURES.goods ? <GoodsDetail /> : <ComingSoon feature="goods" />;
 }

@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { FEATURES } from "@/lib/features";
+import ComingSoon from "@/components/ComingSoon";
 import { useApp, useGuard } from "@/lib/store";
 import { PRODUCT_CATEGORIES } from "@/lib/products";
 import { fmtPt } from "@/lib/db";
 import { ICart } from "@/components/icons";
 import { Chip, Loading, Screen } from "@/components/ui";
 
-export default function Goods() {
+function Goods() {
   const ok = useGuard("user");
   const { cart, providers, products } = useApp();
   const [cat, setCat] = useState("すべて");
@@ -59,4 +61,9 @@ export default function Goods() {
       </div>
     </Screen>
   );
+}
+
+// FEATURES.goods が false の間は準備中画面を表示
+export default function Page() {
+  return FEATURES.goods ? <Goods /> : <ComingSoon feature="goods" />;
 }

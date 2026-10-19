@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { FEATURES } from "@/lib/features";
+import ComingSoon from "@/components/ComingSoon";
 import { useApp, useGuard } from "@/lib/store";
 import { fmtDate, fmtPt, list } from "@/lib/db";
 import type { PalmReading } from "@/lib/types";
@@ -11,7 +13,7 @@ import { BackHeader, Loading, Screen, btnGold } from "@/components/ui";
 
 type Result = { keyword: string; summary: string; life: string; heart: string; head: string; fate: string };
 
-export default function PalmResult() {
+function PalmResult() {
   const ok = useGuard("user");
   const { id } = useParams<{ id: string }>();
   const { settings } = useApp();
@@ -79,4 +81,9 @@ export default function PalmResult() {
       </div>
     </Screen>
   );
+}
+
+// FEATURES.palm が false の間は準備中画面を表示
+export default function Page() {
+  return FEATURES.palm ? <PalmResult /> : <ComingSoon feature="palm" />;
 }

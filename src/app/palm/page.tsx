@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEATURES } from "@/lib/features";
+import ComingSoon from "@/components/ComingSoon";
 import { useApp, useGuard } from "@/lib/store";
 import { add, fmtPt } from "@/lib/db";
 import type { PalmReading } from "@/lib/types";
@@ -28,7 +30,7 @@ async function shrink(file: File): Promise<string> {
   return c.toDataURL("image/jpeg", 0.85);
 }
 
-export default function Palm() {
+function Palm() {
   const ok = useGuard("user");
   const router = useRouter();
   const { user, settings, spend } = useApp();
@@ -130,4 +132,9 @@ export default function Palm() {
       </div>
     </Screen>
   );
+}
+
+// FEATURES.palm が false の間は準備中画面を表示
+export default function Page() {
+  return FEATURES.palm ? <Palm /> : <ComingSoon feature="palm" />;
 }
