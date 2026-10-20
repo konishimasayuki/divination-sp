@@ -1,5 +1,6 @@
 "use client";
 
+import { BirthFields } from "@/components/BirthFields";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -54,16 +55,7 @@ export default function Register() {
             <label htmlFor="nm" className="text-xs text-lav">お名前(ニックネーム可)</label>
             <input id="nm" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="占い 花子" className={inputCls} />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <label htmlFor="bd" className="text-xs text-lav">生年月日</label>
-              <input id="bd" type="date" value={f.birthday} onChange={(e) => set("birthday", e.target.value)} className={`${inputCls} [color-scheme:dark]`} />
-            </div>
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <label htmlFor="bt" className="text-xs text-lav">出生時間(任意)</label>
-              <input id="bt" type="time" value={f.birthTime} onChange={(e) => set("birthTime", e.target.value)} className={`${inputCls} [color-scheme:dark]`} />
-            </div>
-          </div>
+          <BirthFields birthday={f.birthday} birthTime={f.birthTime} onBirthday={(x) => set("birthday", x)} onBirthTime={(x) => set("birthTime", x)} timeLabel="出生時間(任意)" />
           <div className="flex flex-col gap-1.5">
             <span className="text-xs text-lav">性別</span>
             {choice("gender", [["女性", "女性"], ["男性", "男性"], ["その他", "その他"]], "grid-cols-3")}

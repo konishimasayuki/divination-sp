@@ -39,3 +39,19 @@ input::placeholder, textarea::placeholder {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* iPhoneのSafariで日付・時刻欄が枠からはみ出さないように */
+.birth-input {
+  -webkit-appearance: none;
+  width: 100%;
+  max-width: 100%;
+  line-height: 48px;
+  text-align: left;
+}
+.birth-input::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+.birth-input::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { BirthFields } from "@/components/BirthFields";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp, useGuard } from "@/lib/store";
@@ -44,16 +45,7 @@ export default function EditProfile() {
           <label htmlFor="nm" className="text-xs text-lav">お名前</label>
           <input id="nm" value={v.name} onChange={(e) => set("name", e.target.value)} className={inputCls} />
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor="bd" className="text-xs text-lav">生年月日</label>
-            <input id="bd" type="date" value={v.birthday} onChange={(e) => set("birthday", e.target.value)} className={`${inputCls} [color-scheme:dark]`} />
-          </div>
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor="bt" className="text-xs text-lav">出生時間</label>
-            <input id="bt" type="time" value={v.birthTime} onChange={(e) => set("birthTime", e.target.value)} className={`${inputCls} [color-scheme:dark]`} />
-          </div>
-        </div>
+        <BirthFields birthday={v.birthday} birthTime={v.birthTime} onBirthday={(x) => set("birthday", x)} onBirthTime={(x) => set("birthTime", x)} timeLabel="出生時間(任意)" />
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-lav">性別</span>
           {choice("gender", [["女性", "女性"], ["男性", "男性"], ["その他", "その他"]], "grid-cols-3")}
