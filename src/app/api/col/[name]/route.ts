@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { notifyOnCreate, notifyOnUpdate } from "@/lib/push";
 import { assertRedis, redis } from "@/lib/redis";
 
 // 汎用コレクションAPI(Upstash Redisに配列として保存)
@@ -77,6 +78,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ name: stri
     // 肥大化防止(メッセージ・履歴は直近のみ保持)
     const capped = items.length > 3000 ? items.slice(items.length - 3000) : items;
     await redis.set(`col:${name}`, capped);
+    // 相手へのプッシュ通知(返事を待たせないよう、応答のあとで送る)
+    after(() => notifyOnCreate(name, item));
     return NextResponse.json({ item });
   } catch (e) {
     return fail(e);
@@ -100,6 +103,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ name: str
         return NextResponse.json({ error: "このメッセージは送信が取り消されました" }, { status: 409 });
       }
     }
+    const before = items.find((it) => it.id === id);
     let updated: Item | null = null;
     const next = items.map((it) => {
       if (it.id !== id) return it;
@@ -112,6 +116,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ name: str
       next.push(updated);
     }
     await redis.set(`col:${name}`, next);
+    const afterItem = updated as Item;
+    after(() => notifyOnUpdate(name, before, afterItem));
     return NextResponse.json({ item: updated });
   } catch (e) {
     return fail(e);
