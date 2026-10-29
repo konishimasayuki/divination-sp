@@ -18,7 +18,6 @@ export default function MyPage() {
     ["/history?palm", "AI手相の記録", <IPalm key="p" size={20} className="text-gold" />],
     ["/goods", "開運グッズ", <IBag key="b" size={20} className="text-gold" />],
     ["/points", "ポイント購入", <ICardPay key="k" size={20} className="text-gold" />],
-    ["/mypage/settings", "通知設定", <svg key="n" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="text-gold" aria-hidden><path d="M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" /><path d="M10 20a2 2 0 0 0 4 0" /></svg>],
   ];
 
   return (
